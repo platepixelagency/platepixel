@@ -356,7 +356,7 @@ export const ClientPortal: React.FC = () => {
             {/* My Recent Invoices Card */}
             <div className="huly-card p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-white text-base flex items-center space-x-2">
+                <h3 className="font-bold text-[#ffffff] text-base flex items-center space-x-2">
                   <FileText className="w-4 h-4 text-emerald-400" />
                   <span>Recent Invoices</span>
                 </h3>
@@ -377,7 +377,7 @@ export const ClientPortal: React.FC = () => {
                       <span className="text-[#95979e] text-[10px]">{new Date(inv.createdAt).toLocaleDateString()}</span>
                     </div>
                     <div className="text-right">
-                      <span className="font-mono font-bold text-white block">${inv.amount}</span>
+                      <span className="font-mono font-bold text-white block">₹{inv.amount.toLocaleString('en-IN')}</span>
                       {getInvoiceBadge(inv.status)}
                     </div>
                   </div>
@@ -423,7 +423,7 @@ export const ClientPortal: React.FC = () => {
         <div className="huly-card overflow-hidden">
           <div className="p-6 border-b border-[#4a4b50]/40 flex justify-between items-center">
             <h3 className="text-lg font-bold text-white">Invoices & Payment History</h3>
-            <span className="text-xs font-mono text-emerald-400">Total Paid: ${metrics.totalPaid.toLocaleString()}</span>
+            <span className="text-xs font-mono text-emerald-400">Total Paid: ₹{metrics.totalPaid.toLocaleString('en-IN')}</span>
           </div>
 
           <div className="overflow-x-auto">
@@ -447,7 +447,7 @@ export const ClientPortal: React.FC = () => {
                     <tr key={inv.id} className="hover:bg-[#090a0c]/50 transition-colors">
                       <td className="p-4 font-mono font-bold text-white">{inv.invoiceNumber}</td>
                       <td className="p-4 text-[#95979e] font-mono">{new Date(inv.createdAt).toLocaleDateString()}</td>
-                      <td className="p-4 font-mono font-bold text-white">${inv.amount}</td>
+                      <td className="p-4 font-mono font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
                       <td className="p-4">{getInvoiceBadge(inv.status)}</td>
                       <td className="p-4 text-right">
                         <button

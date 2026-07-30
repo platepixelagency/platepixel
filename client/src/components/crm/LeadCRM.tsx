@@ -539,11 +539,11 @@ export const LeadCRM: React.FC = () => {
                   onChange={(e) => setNewLead({ ...newLead, service: e.target.value })}
                   className="huly-input"
                 >
-                  <option value="Business Website">Business Website ($499)</option>
-                  <option value="Restaurant Website & QR Menu">Restaurant Website & QR Menu</option>
-                  <option value="Wedding Website">Wedding Website</option>
-                  <option value="Growth Retainer ($99/mo)">Growth Retainer ($99/mo)</option>
-                  <option value="Custom Web App ($1,499+)">Custom Web App ($1,499+)</option>
+                  <option value="Business Website">Business Website (₹14,999)</option>
+                  <option value="Restaurant Website & QR Menu">Restaurant Website & QR Menu (₹24,999)</option>
+                  <option value="Wedding Website">Wedding Website (₹19,999)</option>
+                  <option value="Growth Retainer (₹2,999/mo)">Growth Retainer (₹2,999/mo)</option>
+                  <option value="Custom Web App (₹49,999+)">Custom Web App (₹49,999+)</option>
                 </select>
               </div>
 

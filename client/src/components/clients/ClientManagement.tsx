@@ -437,13 +437,13 @@ export const ClientManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[#95979e] mb-1">Amount ($ USD) *</label>
+                <label className="block text-[#95979e] mb-1">Amount (₹ INR) *</label>
                 <input
                   type="number"
                   required
                   value={invoiceForm.amount}
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, amount: e.target.value })}
-                  placeholder="499"
+                  placeholder="14999"
                   className="huly-input font-mono"
                 />
               </div>

@@ -24,7 +24,7 @@ import { Footer } from '../components/Footer';
 export const Home: React.FC = () => {
   const [heroStats, setHeroStats] = useState({
     clientProjects: '24 Active',
-    leadCrmWon: '$48,500',
+    leadCrmWon: '₹14,85,000',
     maintenanceRenewals: '98% On Time',
   });
 
@@ -70,8 +70,8 @@ export const Home: React.FC = () => {
         </div>
 
         {/* Product Screenshot Frame (Huly Aesthetic Mockup) */}
-        <div className="relative max-w-5xl mx-auto">
-          <div className="huly-card p-3 md:p-4 rounded-2xl border-[#4a4b50]/60 shadow-[0_10px_40px_rgba(0,0,0,0.7)] overflow-hidden">
+        <div className="relative max-w-5xl mx-auto animate-float-3d">
+          <div className="huly-card p-3 md:p-4 rounded-2xl border-[#4a4b50]/60 shadow-[0_10px_40px_rgba(0,0,0,0.7)] overflow-hidden animate-holo-glow">
             <div className="bg-[#090a0c] rounded-xl border border-[#4a4b50]/40 overflow-hidden">
               {/* Fake Window Bar */}
               <div className="bg-[#111111] px-4 py-2.5 border-b border-[#4a4b50]/40 flex items-center justify-between">

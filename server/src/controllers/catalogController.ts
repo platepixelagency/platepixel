@@ -4,7 +4,7 @@ import { prisma } from '../prisma.js';
 // In-memory / dynamic Hero Stats state
 export let currentHeroStats = {
   clientProjects: '24 Active',
-  leadCrmWon: '$48,500',
+  leadCrmWon: '₹14,85,000',
   maintenanceRenewals: '98% On Time',
 };
 
@@ -85,7 +85,7 @@ const DEFAULT_SERVICES = [
   {
     title: 'Starter Business Website',
     category: 'Website Development',
-    price: '$499',
+    price: '₹14,999',
     description: 'Modern, ultra-fast 5-page responsive website designed for local businesses, restaurants, and service providers with lead intake form.',
     features: 'Responsive Mobile Design,SEO Optimized Meta Tags,Lead Capture Integration,Fast CDN Hosting,Contact & WhatsApp Form',
     isPopular: false,
@@ -93,7 +93,7 @@ const DEFAULT_SERVICES = [
   {
     title: 'Restaurant Website & Live QR Menu',
     category: 'Food & Hospitality',
-    price: '$799',
+    price: '₹24,999',
     description: 'Complete digital menu portal with dynamic QR code generator, table reservations, online order inquiry, and menu item updates.',
     features: 'Digital QR Code Menu,Dynamic Item Categories,Table Booking System,WhatsApp Order Direct,Google Maps & Review Sync',
     isPopular: true,
@@ -101,7 +101,7 @@ const DEFAULT_SERVICES = [
   {
     title: 'Monthly Growth & Security Retainer',
     category: 'Maintenance & Retainer',
-    price: '$99 / month',
+    price: '₹2,999 / month',
     description: 'Hands-free technical maintenance including automated daily backups, SSL security renewal, regular content edits, and SEO audits.',
     features: 'Daily Automated Cloud Backups,24/7 Uptime Monitoring,Monthly Content Updates,SSL & Security Patches,Priority Helpdesk Support',
     isPopular: false,
@@ -109,7 +109,7 @@ const DEFAULT_SERVICES = [
   {
     title: 'Custom Web Application & CRM',
     category: 'Custom Software',
-    price: '$1,499+',
+    price: '₹49,999+',
     description: 'Custom React & Node.js web applications, client portals, internal billing systems, and automated workflow software.',
     features: 'Custom Database & API Architecture,Role-Based Portal Access,Stripe / Invoice Payment Flow,Automated Email Notifications,Dedicated Codebase Repo',
     isPopular: true,
@@ -119,7 +119,7 @@ const DEFAULT_SERVICES = [
 const DEFAULT_PRICING = [
   {
     title: 'Starter Site',
-    price: '$499',
+    price: '₹14,999',
     period: 'one-time',
     description: 'Perfect for small local businesses needing a fast, modern digital footprint.',
     features: '5 Custom Pages,Mobile & Tablet Optimized,Lead Intake Contact Form,Basic Local SEO Setup,1 Year Free Domain Guidance',
@@ -127,7 +127,7 @@ const DEFAULT_PRICING = [
   },
   {
     title: 'Growth Retainer',
-    price: '$99',
+    price: '₹2,999',
     period: 'per month',
     description: 'Hands-off website maintenance, hosting, updates, and continuous growth support.',
     features: 'Managed Web Hosting Included,SSL Certificate & Security,Unlimited Content Edits,Monthly Performance & SEO Reports,24/7 Ticket Support Response',
@@ -135,7 +135,7 @@ const DEFAULT_PRICING = [
   },
   {
     title: 'Custom Web App',
-    price: '$1,499',
+    price: '₹49,999',
     period: 'starting',
     description: 'Tailored SaaS products, interactive web software, custom CRMs, and API integrations.',
     features: 'Full-Stack React & Node.js Engine,Dedicated Client Portal,Custom Billing & Invoicing,API & Payment Gateways,Source Code Ownership',

@@ -62,7 +62,7 @@ export const CatalogManagement: React.FC = () => {
 
   const [heroForm, setHeroForm] = useState({
     clientProjects: '24 Active',
-    leadCrmWon: '$48,500',
+    leadCrmWon: '₹14,85,000',
     maintenanceRenewals: '98% On Time',
   });
 
@@ -70,7 +70,7 @@ export const CatalogManagement: React.FC = () => {
   const [newService, setNewService] = useState({
     title: '',
     category: 'Website Development',
-    price: '$499',
+    price: '₹14,999',
     description: '',
     features: '',
     isPopular: false,
@@ -78,7 +78,7 @@ export const CatalogManagement: React.FC = () => {
 
   const [newPricing, setNewPricing] = useState({
     title: '',
-    price: '$499',
+    price: '₹14,999',
     period: 'one-time',
     description: '',
     features: '',

@@ -41,7 +41,7 @@ export const Pricing: React.FC = () => {
               </p>
 
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">$499</span>
+                <span className="text-4xl font-extrabold text-white">₹14,999</span>
                 <span className="text-xs text-[#95979e] ml-2">one-time investment</span>
               </div>
 
@@ -70,7 +70,7 @@ export const Pricing: React.FC = () => {
             </div>
 
             <button
-              onClick={() => handleSelectPlan('Starter Website ($499)')}
+              onClick={() => handleSelectPlan('Starter Website (₹14,999)')}
               className="btn-pill-secondary w-full py-3 text-xs text-center"
             >
               Choose Starter Plan
@@ -91,7 +91,7 @@ export const Pricing: React.FC = () => {
               </p>
 
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">$99</span>
+                <span className="text-4xl font-extrabold text-white">₹2,999</span>
                 <span className="text-xs text-[#95979e] ml-2">/ month</span>
               </div>
 
@@ -120,7 +120,7 @@ export const Pricing: React.FC = () => {
             </div>
 
             <button
-              onClick={() => handleSelectPlan('Growth Retainer ($99/mo)')}
+              onClick={() => handleSelectPlan('Growth Retainer (₹2,999/mo)')}
               className="btn-pill-primary w-full py-3 text-xs text-center"
             >
               Start Monthly Retainer
@@ -137,7 +137,7 @@ export const Pricing: React.FC = () => {
               </p>
 
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">$1,499+</span>
+                <span className="text-4xl font-extrabold text-white">₹49,999+</span>
                 <span className="text-xs text-[#95979e] ml-2">scoped build</span>
               </div>
 
@@ -166,7 +166,7 @@ export const Pricing: React.FC = () => {
             </div>
 
             <button
-              onClick={() => handleSelectPlan('Custom Web App ($1,499+)')}
+              onClick={() => handleSelectPlan('Custom Web App (₹49,999+)')}
               className="btn-pill-secondary w-full py-3 text-xs text-center border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
             >
               Request App Scope

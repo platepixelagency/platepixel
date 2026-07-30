@@ -233,3 +233,36 @@ body {
   animation: pageSwitch3D 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-style: preserve-3d;
 }
+
+/* Enhanced 3D Animation Effects */
+@keyframes float3D {
+  0%, 100% {
+    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotateX(3deg) rotateY(-2deg);
+  }
+}
+
+@keyframes holoGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px rgba(86, 131, 218, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 35px rgba(255, 137, 100, 0.7));
+  }
+}
+
+.animate-float-3d {
+  animation: float3D 4s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+.animate-holo-glow {
+  animation: holoGlow 3s ease-in-out infinite;
+}
+
+/* Staggered Scroll Entrance Delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }

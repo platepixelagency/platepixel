@@ -202,7 +202,7 @@ export const InvoiceManagement: React.FC = () => {
           </div>
           <div>
             <div className="text-xs text-[#95979e] uppercase font-mono">Total Invoiced</div>
-            <div className="text-2xl font-extrabold text-white mt-0.5">${totalInvoiced.toLocaleString()}</div>
+            <div className="text-2xl font-extrabold text-white mt-0.5">₹{totalInvoiced.toLocaleString('en-IN')}</div>
           </div>
         </div>
 
@@ -212,7 +212,7 @@ export const InvoiceManagement: React.FC = () => {
           </div>
           <div>
             <div className="text-xs text-[#95979e] uppercase font-mono">Collected Payments</div>
-            <div className="text-2xl font-extrabold text-emerald-400 mt-0.5">${totalPaid.toLocaleString()}</div>
+            <div className="text-2xl font-extrabold text-emerald-400 mt-0.5">₹{totalPaid.toLocaleString('en-IN')}</div>
           </div>
         </div>
 
@@ -222,7 +222,7 @@ export const InvoiceManagement: React.FC = () => {
           </div>
           <div>
             <div className="text-xs text-[#95979e] uppercase font-mono">Pending Balance</div>
-            <div className="text-2xl font-extrabold text-amber-400 mt-0.5">${totalPending.toLocaleString()}</div>
+            <div className="text-2xl font-extrabold text-amber-400 mt-0.5">₹{totalPending.toLocaleString('en-IN')}</div>
           </div>
         </div>
       </div>
@@ -309,7 +309,7 @@ export const InvoiceManagement: React.FC = () => {
                       {new Date(inv.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-4 font-mono font-bold text-white text-sm">
-                      ${inv.amount.toLocaleString()}
+                      ₹{inv.amount.toLocaleString('en-IN')}
                     </td>
                     <td className="p-4">{getStatusBadge(inv.status)}</td>
                     <td className="p-4 text-right space-x-2">
@@ -396,7 +396,7 @@ export const InvoiceManagement: React.FC = () => {
                   <span className="text-[#95979e] text-[11px]">Website development, hosting management & maintenance services.</span>
                 </div>
                 <div className="text-right font-mono font-bold text-white text-base">
-                  ${selectedInvoice.amount.toLocaleString()}
+                  ₹{selectedInvoice.amount.toLocaleString('en-IN')}
                 </div>
               </div>
             </div>
@@ -408,7 +408,7 @@ export const InvoiceManagement: React.FC = () => {
                 <div className="space-y-2">
                   {selectedInvoice.payments.map(p => (
                     <div key={p.id} className="p-3 bg-[#090a0c] rounded-xl border border-[#4a4b50]/40 flex justify-between text-xs font-mono">
-                      <span className="text-emerald-400 font-bold">+${p.amount} Received</span>
+                      <span className="text-emerald-400 font-bold">+₹{p.amount.toLocaleString('en-IN')} Received</span>
                       <span className="text-[#95979e]">{new Date(p.paymentDate).toLocaleDateString()}</span>
                     </div>
                   ))}
