@@ -3,6 +3,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Navbar } from './components/Navbar';
+import { Home } from './pages/Home';
+import { Services } from './pages/Services';
+import { Pricing } from './pages/Pricing';
+import { Portfolio } from './pages/Portfolio';
+import { About } from './pages/About';
+import { Contact } from './pages/Contact';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
@@ -15,8 +21,19 @@ export const App: React.FC = () => {
           <Navbar />
           <main className="flex-1">
             <Routes>
+              {/* Public Website Pages */}
+              <Route path="/" element={<Home />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+
+              {/* Portal Authentication */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+
+              {/* Protected Workspace */}
               <Route
                 path="/dashboard"
                 element={
@@ -25,8 +42,9 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
         </div>
