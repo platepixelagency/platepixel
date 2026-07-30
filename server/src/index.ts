@@ -8,6 +8,7 @@ import projectRoutes from './routes/projectRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 import clientPortalRoutes from './routes/clientPortalRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
+import automationRoutes from './routes/automationRoutes.js';
 import { prisma } from './prisma.js';
 
 dotenv.config();
@@ -56,6 +57,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/portal', clientPortalRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/automation', automationRoutes);
 
 // Global Error Handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
