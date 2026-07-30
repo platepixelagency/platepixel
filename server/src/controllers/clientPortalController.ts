@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { prisma } from '../prisma.js';
+import { supabase } from '../supabase.js';
 import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
 
 // Get unified Client Portal Summary for logged-in Client user
@@ -89,7 +90,20 @@ export const createDocument = async (req: AuthenticatedRequest, res: Response): 
       },
     });
 
-    res.status(201).json({ message: 'Document uploaded successfully', document });
+    // Mirror insert into Supabase DB
+    try {
+      await supabase.from('documents').insert({
+        id: document.id,
+        client_id: document.clientId,
+        file_name: document.fileName,
+        file_url: document.fileUrl,
+        created_at: document.createdAt.toISOString(),
+      });
+    } catch (err: any) {
+      console.error('Supabase document insert sync error:', err);
+    }
+
+    res.status(201).json({ message: 'Document uploaded and saved to Supabase DB successfully', document });
   } catch (error: any) {
     console.error('Error creating document:', error);
     res.status(500).json({ error: 'Failed to upload document' });

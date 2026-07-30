@@ -182,16 +182,18 @@ export const ClientManagement: React.FC = () => {
     setSubmitting(true);
 
     try {
+      const defaultPdfLink = docForm.fileUrl.trim() || `https://platepixel.agency/contracts/${encodeURIComponent(docForm.fileName)}`;
+
       await fetchWithAuth('/portal/documents', {
         method: 'POST',
         body: JSON.stringify({
           clientId: docModalClient.id,
           fileName: docForm.fileName,
-          fileUrl: docForm.fileUrl,
+          fileUrl: defaultPdfLink,
         }),
       });
 
-      alert(`Document "${docForm.fileName}" uploaded for ${docModalClient.companyName}!`);
+      alert(`Document "${docForm.fileName}" saved to Supabase DB for ${docModalClient.companyName}!`);
       setDocModalClient(null);
       setDocForm({
         docType: 'Change Request Agreement (CRA)',

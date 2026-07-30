@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../prisma.js';
+import { supabase } from '../supabase.js';
 import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
 
 // Public API: Submit new lead from Public Website
@@ -26,6 +27,24 @@ export const createLead = async (req: Request, res: Response): Promise<void> => 
         status: 'NEW',
       },
     });
+
+    // Mirror insert into Supabase DB
+    try {
+      await supabase.from('leads').insert({
+        id: lead.id,
+        name: lead.name,
+        business_name: lead.businessName,
+        mobile: lead.mobile,
+        email: lead.email,
+        category: lead.category,
+        service: lead.service,
+        budget: lead.budget,
+        message: lead.message,
+        status: lead.status,
+      });
+    } catch (err: any) {
+      console.error('Supabase lead insert sync error:', err);
+    }
 
     res.status(201).json({
       message: 'Lead captured successfully! Our team will get back to you shortly.',
@@ -73,6 +92,15 @@ export const updateLeadStatus = async (req: AuthenticatedRequest, res: Response)
       where: { id: leadId },
       data: { status },
     });
+
+    // Mirror update into Supabase DB
+    try {
+      await supabase.from('leads')
+        .update({ status: lead.status, updated_at: new Date().toISOString() })
+        .eq('id', lead.id);
+    } catch (err: any) {
+      console.error('Supabase lead status update sync error:', err);
+    }
 
     res.status(200).json({ message: 'Lead status updated', lead });
   } catch (error: any) {
