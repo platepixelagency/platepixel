@@ -43,16 +43,16 @@ export const Home: React.FC = () => {
       <div className="aurora-beam" />
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-20 pb-24 px-6 max-w-7xl mx-auto text-center">
-        <div className="inline-flex items-center space-x-2 bg-[#111111] border border-[#4a4b50] rounded-full px-4 py-1.5 mb-6 shadow-xl shadow-[#5683da]/10 animate-fade-in">
-          <Sparkles className="w-3.5 h-3.5 text-[#ff8964]" />
-          <span className="text-xs font-medium text-[#95979e]">
+      <section className="relative z-10 pt-24 pb-24 px-6 max-w-7xl mx-auto text-center">
+        <div className="tag-pill-vip mb-6">
+          <Sparkles className="w-4 h-4 text-[#ff8964] animate-spin-slow" />
+          <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">
             Next-Gen Agency Platform for Local Businesses & Web Apps
           </span>
         </div>
 
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight max-w-5xl mx-auto leading-[1.08] mb-6">
-          High-Performance Websites & Apps Built to <span className="bg-gradient-to-r from-[#5683da] via-[#94b3f2] to-[#ff8964] bg-clip-text text-transparent">Scale Your Business</span>
+          High-Performance Websites & Apps Built to <span className="text-vip-shimmer">Scale Your Business</span>
         </h1>
 
         <p className="text-base sm:text-lg text-[#95979e] max-w-2xl mx-auto mb-10 leading-relaxed">

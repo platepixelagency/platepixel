@@ -6,6 +6,7 @@ import { Footer } from '../components/Footer';
 export const LegalPolicies: React.FC = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<'privacy' | 'terms' | 'sla'>('privacy');
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
 
   useEffect(() => {
     if (location.pathname.includes('terms')) {
@@ -17,21 +18,41 @@ export const LegalPolicies: React.FC = () => {
     }
   }, [location.pathname]);
 
+  // Reading Vibe Progress Effect on Scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        const currentProgress = (window.scrollY / totalHeight) * 100;
+        setScrollProgress(currentProgress);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#090a0c] text-[#95979e] flex flex-col font-sans relative overflow-hidden">
+      {/* Reading Vibe Glow Progress Bar */}
+      <div 
+        className="fixed top-0 left-0 h-1 z-50 bg-gradient-to-r from-[#5683da] via-[#ff8964] to-emerald-400 shadow-[0_0_15px_#5683da] transition-all duration-150 ease-out"
+        style={{ width: `${scrollProgress}%` }}
+      />
+
       {/* Background Aurora Effect */}
       <div className="aurora-beam" />
 
       {/* Header Banner */}
-      <div className="relative z-10 pt-16 pb-12 text-center px-6 border-b border-[#4a4b50]/30 bg-[#090a0c]/60 backdrop-blur-md">
+      <div className="relative z-10 pt-20 pb-14 text-center px-6 border-b border-[#4a4b50]/30 bg-[#090a0c]/60 backdrop-blur-md">
         <div className="max-w-4xl mx-auto space-y-4">
-          <div className="inline-flex items-center space-x-2 bg-[#111111] border border-[#4a4b50] rounded-full px-4 py-1.5 shadow-lg">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-mono uppercase tracking-wider text-white">Trust & Compliance Standards</span>
+          <div className="tag-pill-vip mb-4">
+            <Sparkles className="w-4 h-4 text-[#ff8964] animate-spin-slow" />
+            <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">Trust & Compliance Standards</span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
-            Plate<span className="text-[#ff8964]">Pixel</span> Legal & Policy Center
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight">
+            Plate<span className="text-[#ff8964]">Pixel</span> <span className="text-vip-shimmer">Legal & Policy Center</span>
           </h1>
           <p className="text-sm md:text-base text-[#95979e] max-w-2xl mx-auto leading-relaxed">
             Transparent governance, enterprise data privacy standards, client ownership terms, and our binding 99.9% Service Level Agreement.
@@ -41,10 +62,10 @@ export const LegalPolicies: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center gap-3 pt-6">
             <Link
               to="/privacy"
-              className={`flex items-center space-x-2 px-6 py-2.5 rounded-full text-xs font-semibold transition-all ${
+              className={`flex items-center space-x-2 px-6 py-2.5 rounded-full text-xs font-semibold transition-all duration-300 transform hover:scale-105 ${
                 activeTab === 'privacy'
-                  ? 'bg-gradient-to-r from-[#5683da] to-[#ff8964] text-white shadow-lg shadow-[#5683da]/25'
-                  : 'bg-[#111111] border border-[#4a4b50] text-[#95979e] hover:text-white'
+                  ? 'bg-gradient-to-r from-[#5683da] to-[#ff8964] text-white shadow-xl shadow-[#5683da]/30 border border-white/20'
+                  : 'bg-[#111111]/80 backdrop-blur-md border border-[#4a4b50] text-[#95979e] hover:text-white hover:border-[#5683da]'
               }`}
             >
               <Lock className="w-4 h-4" />
@@ -53,10 +74,10 @@ export const LegalPolicies: React.FC = () => {
 
             <Link
               to="/terms"
-              className={`flex items-center space-x-2 px-6 py-2.5 rounded-full text-xs font-semibold transition-all ${
+              className={`flex items-center space-x-2 px-6 py-2.5 rounded-full text-xs font-semibold transition-all duration-300 transform hover:scale-105 ${
                 activeTab === 'terms'
-                  ? 'bg-gradient-to-r from-[#5683da] to-[#ff8964] text-white shadow-lg shadow-[#5683da]/25'
-                  : 'bg-[#111111] border border-[#4a4b50] text-[#95979e] hover:text-white'
+                  ? 'bg-gradient-to-r from-[#5683da] to-[#ff8964] text-white shadow-xl shadow-[#5683da]/30 border border-white/20'
+                  : 'bg-[#111111]/80 backdrop-blur-md border border-[#4a4b50] text-[#95979e] hover:text-white hover:border-[#ff8964]'
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -65,10 +86,10 @@ export const LegalPolicies: React.FC = () => {
 
             <Link
               to="/sla"
-              className={`flex items-center space-x-2 px-6 py-2.5 rounded-full text-xs font-semibold transition-all ${
+              className={`flex items-center space-x-2 px-6 py-2.5 rounded-full text-xs font-semibold transition-all duration-300 transform hover:scale-105 ${
                 activeTab === 'sla'
-                  ? 'bg-gradient-to-r from-[#5683da] to-[#ff8964] text-white shadow-lg shadow-[#5683da]/25'
-                  : 'bg-[#111111] border border-[#4a4b50] text-[#95979e] hover:text-white'
+                  ? 'bg-gradient-to-r from-[#5683da] to-[#ff8964] text-white shadow-xl shadow-[#5683da]/30 border border-white/20'
+                  : 'bg-[#111111]/80 backdrop-blur-md border border-[#4a4b50] text-[#95979e] hover:text-white hover:border-emerald-400'
               }`}
             >
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
