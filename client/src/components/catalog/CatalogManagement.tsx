@@ -64,6 +64,10 @@ export const CatalogManagement: React.FC = () => {
     clientProjects: '24 Active',
     leadCrmWon: '₹14,85,000',
     maintenanceRenewals: '98% On Time',
+    leadsGenerated: '100+',
+    activeRetainers: '30+',
+    uptimeSecurity: '99.9%',
+    onTimeDelivery: '100%',
   });
 
   // Forms state
@@ -814,8 +818,65 @@ export const CatalogManagement: React.FC = () => {
                 />
               </div>
 
+              {/* Homepage Metrics Banner Section */}
+              <div className="pt-3 border-t border-[#4a4b50]/40 space-y-3">
+                <h4 className="font-mono text-white text-xs uppercase tracking-wider text-[#5683da]">Homepage Metrics Banner Stat Numbers</h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#95979e] mb-1">LEADS GENERATED *</label>
+                    <input
+                      type="text"
+                      required
+                      value={heroForm.leadsGenerated || '100+'}
+                      onChange={(e) => setHeroForm({ ...heroForm, leadsGenerated: e.target.value })}
+                      placeholder="100+"
+                      className="huly-input font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#95979e] mb-1">ACTIVE RETAINERS *</label>
+                    <input
+                      type="text"
+                      required
+                      value={heroForm.activeRetainers || '30+'}
+                      onChange={(e) => setHeroForm({ ...heroForm, activeRetainers: e.target.value })}
+                      placeholder="30+"
+                      className="huly-input font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#95979e] mb-1">UPTIME & SECURITY *</label>
+                    <input
+                      type="text"
+                      required
+                      value={heroForm.uptimeSecurity || '99.9%'}
+                      onChange={(e) => setHeroForm({ ...heroForm, uptimeSecurity: e.target.value })}
+                      placeholder="99.9%"
+                      className="huly-input font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#95979e] mb-1">ON-TIME DELIVERY *</label>
+                    <input
+                      type="text"
+                      required
+                      value={heroForm.onTimeDelivery || '100%'}
+                      onChange={(e) => setHeroForm({ ...heroForm, onTimeDelivery: e.target.value })}
+                      placeholder="100%"
+                      className="huly-input font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <button type="submit" disabled={submitting} className="btn-pill-primary w-full py-3 text-xs mt-2">
-                {submitting ? 'Saving Live Preview Changes...' : 'Save Live Preview Changes'}
+                {submitting ? 'Saving Live Hero & Banner Stats...' : 'Save Live Hero & Banner Stats'}
               </button>
             </form>
           </div>

@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   ChevronDown
 } from 'lucide-react';
+import { CountUpNumber } from '../components/CountUpNumber';
 import { Footer } from '../components/Footer';
 
 export const Home: React.FC = () => {
@@ -26,6 +27,10 @@ export const Home: React.FC = () => {
     clientProjects: '24 Active',
     leadCrmWon: '₹14,85,000',
     maintenanceRenewals: '98% On Time',
+    leadsGenerated: '100+',
+    activeRetainers: '30+',
+    uptimeSecurity: '99.9%',
+    onTimeDelivery: '100%',
   });
 
   useEffect(() => {
@@ -98,10 +103,10 @@ export const Home: React.FC = () => {
                 </div>
 
                 <div className="bg-[#111111] p-5 rounded-xl border border-[#4a4b50]/50 space-y-2">
-                  <div className="text-xs text-[#95979e] uppercase font-mono">Lead CRM Won</div>
+                  <div className="text-xs text-[#95979e] uppercase font-mono">Lead CRM Revenue Won</div>
                   <div className="text-2xl font-bold text-[#ff8964]">{heroStats.leadCrmWon}</div>
                   <div className="w-full bg-[#090a0c] h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-[#ff8964] h-full w-[65%]"></div>
+                    <div className="bg-[#ff8964] h-full w-[92%]"></div>
                   </div>
                 </div>
 
@@ -131,24 +136,27 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Metrics Banner */}
-      <section className="border-y border-[#4a4b50]/40 bg-[#090a0c]/80 backdrop-blur-md py-14 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          <div className="huly-card p-6 hover:border-[#5683da] shadow-lg hover:shadow-[#5683da]/20 transition-all transform hover:-translate-y-1.5">
-            <div className="text-3xl sm:text-4xl font-extrabold text-white text-vip-shimmer">100+</div>
-            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-wider">Leads Generated</div>
+      {/* Metrics Banner (Clean Borderless Layout with Smooth CountUp Animation) */}
+      <section className="border-y border-[#4a4b50]/30 bg-[#090a0c]/90 backdrop-blur-md py-12 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x-0 md:divide-x divide-[#4a4b50]/30">
+          <div className="px-4 py-2 hover:scale-105 transition-transform duration-300">
+            <CountUpNumber value={heroStats.leadsGenerated || '100+'} className="text-3xl sm:text-5xl font-extrabold text-white text-vip-shimmer block" />
+            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-widest">Leads Generated</div>
           </div>
-          <div className="huly-card p-6 hover:border-[#5683da] shadow-lg hover:shadow-[#5683da]/20 transition-all transform hover:-translate-y-1.5">
-            <div className="text-3xl sm:text-4xl font-extrabold text-[#5683da]">30+</div>
-            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-wider">Active Retainer Clients</div>
+
+          <div className="px-4 py-2 hover:scale-105 transition-transform duration-300">
+            <CountUpNumber value={heroStats.activeRetainers || '30+'} className="text-3xl sm:text-5xl font-extrabold text-[#5683da] block" />
+            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-widest">Active Retainer Clients</div>
           </div>
-          <div className="huly-card p-6 hover:border-[#ff8964] shadow-lg hover:shadow-[#ff8964]/20 transition-all transform hover:-translate-y-1.5">
-            <div className="text-3xl sm:text-4xl font-extrabold text-[#ff8964]">99.9%</div>
-            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-wider">Uptime & Security</div>
+
+          <div className="px-4 py-2 hover:scale-105 transition-transform duration-300">
+            <CountUpNumber value={heroStats.uptimeSecurity || '99.9%'} className="text-3xl sm:text-5xl font-extrabold text-[#ff8964] block" />
+            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-widest">Uptime & Security</div>
           </div>
-          <div className="huly-card p-6 hover:border-emerald-400 shadow-lg hover:shadow-emerald-400/20 transition-all transform hover:-translate-y-1.5">
-            <div className="text-3xl sm:text-4xl font-extrabold text-emerald-400">100%</div>
-            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-wider">On-Time Delivery</div>
+
+          <div className="px-4 py-2 hover:scale-105 transition-transform duration-300">
+            <CountUpNumber value={heroStats.onTimeDelivery || '100%'} className="text-3xl sm:text-5xl font-extrabold text-emerald-400 block" />
+            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-widest">On-Time Delivery</div>
           </div>
         </div>
       </section>

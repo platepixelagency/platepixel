@@ -1,11 +1,15 @@
 import { Response, Request } from 'express';
 import { prisma } from '../prisma.js';
 
-// In-memory / dynamic Hero Stats state
+// In-memory / dynamic Hero Stats & Metrics Banner state
 export let currentHeroStats = {
   clientProjects: '24 Active',
   leadCrmWon: '₹14,85,000',
   maintenanceRenewals: '98% On Time',
+  leadsGenerated: '100+',
+  activeRetainers: '30+',
+  uptimeSecurity: '99.9%',
+  onTimeDelivery: '100%',
 };
 
 export const getHeroStats = async (_req: Request, res: Response): Promise<void> => {
@@ -14,12 +18,16 @@ export const getHeroStats = async (_req: Request, res: Response): Promise<void> 
 
 export const updateHeroStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { clientProjects, leadCrmWon, maintenanceRenewals } = req.body;
+    const { clientProjects, leadCrmWon, maintenanceRenewals, leadsGenerated, activeRetainers, uptimeSecurity, onTimeDelivery } = req.body;
     if (clientProjects) currentHeroStats.clientProjects = clientProjects;
     if (leadCrmWon) currentHeroStats.leadCrmWon = leadCrmWon;
     if (maintenanceRenewals) currentHeroStats.maintenanceRenewals = maintenanceRenewals;
+    if (leadsGenerated) currentHeroStats.leadsGenerated = leadsGenerated;
+    if (activeRetainers) currentHeroStats.activeRetainers = activeRetainers;
+    if (uptimeSecurity) currentHeroStats.uptimeSecurity = uptimeSecurity;
+    if (onTimeDelivery) currentHeroStats.onTimeDelivery = onTimeDelivery;
 
-    res.status(200).json({ message: 'Hero banner stats updated successfully', stats: currentHeroStats });
+    res.status(200).json({ message: 'Hero banner stats & metrics updated successfully', stats: currentHeroStats });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to update hero stats' });
   }
