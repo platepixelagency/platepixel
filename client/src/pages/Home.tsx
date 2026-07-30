@@ -16,7 +16,8 @@ import {
   Users,
   Building,
   TrendingUp,
-  LayoutDashboard
+  LayoutDashboard,
+  ChevronDown
 } from 'lucide-react';
 import { Footer } from '../components/Footer';
 
@@ -115,6 +116,19 @@ export const Home: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Animated Smooth Scroll Down Indicator */}
+        <div className="pt-12 flex justify-center">
+          <a
+            href="#services-section"
+            className="inline-flex flex-col items-center text-xs text-[#95979e] hover:text-[#5683da] transition-colors group cursor-pointer"
+          >
+            <span className="mb-2 font-mono text-[11px] uppercase tracking-widest text-[#95979e] group-hover:text-white">Scroll Down</span>
+            <div className="w-9 h-9 rounded-full bg-[#111111] border border-[#4a4b50] flex items-center justify-center group-hover:border-[#5683da] shadow-lg shadow-[#5683da]/20 animate-bounce-slow">
+              <ChevronDown className="w-4 h-4 text-[#5683da]" />
+            </div>
+          </a>
+        </div>
       </section>
 
       {/* Metrics Banner */}
@@ -140,7 +154,7 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Services Section */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
+      <section id="services-section" className="py-24 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <span className="tag-pill bg-[#5683da]/20 text-[#5683da] uppercase tracking-wider font-mono">Full Spectrum Services</span>
           <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white mt-3">
