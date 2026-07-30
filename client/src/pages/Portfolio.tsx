@@ -9,7 +9,7 @@ interface ProjectItem {
   category: 'Restaurant' | 'SaaS' | 'Wedding' | 'School' | 'E-commerce';
   clientName: string;
   description: string;
-  imageBg: string;
+  imageUrl: string;
   tags: string[];
   metrics: string;
 }
@@ -24,7 +24,7 @@ export const Portfolio: React.FC = () => {
       category: 'Restaurant',
       clientName: 'Apex Hospitality Group',
       description: 'Modern dining restaurant portal equipped with real-time digital QR code menu, WhatsApp table reservation, and Google Maps integration.',
-      imageBg: 'from-amber-600/30 to-red-900/40',
+      imageUrl: '/portfolio/apex_restaurant.png',
       tags: ['Restaurant Site', 'QR Menu', 'WhatsApp Ordering'],
       metrics: '+340% Digital Menu Scans',
     },
@@ -34,7 +34,7 @@ export const Portfolio: React.FC = () => {
       category: 'SaaS',
       clientName: 'Horizon Technologies',
       description: 'Full-stack web application featuring role-based client portal, subscription billing management, and real-time analytics.',
-      imageBg: 'from-blue-600/30 to-indigo-900/40',
+      imageUrl: '/portfolio/horizon_saas.png',
       tags: ['Custom Web App', 'React 19', 'Express API'],
       metrics: '10k+ Monthly Active Users',
     },
@@ -44,7 +44,7 @@ export const Portfolio: React.FC = () => {
       category: 'Wedding',
       clientName: 'Aura Event Studio',
       description: 'Luxury wedding celebration website featuring guest RSVP tracking, digital invitation cards, photo gallery, and event itinerary.',
-      imageBg: 'from-rose-600/30 to-purple-900/40',
+      imageUrl: '/portfolio/aura_wedding.png',
       tags: ['Wedding Site', 'RSVP Portal', 'Photo Gallery'],
       metrics: '500+ RSVP Submissions',
     },
@@ -54,7 +54,7 @@ export const Portfolio: React.FC = () => {
       category: 'School',
       clientName: 'St. Jude Educational Trust',
       description: 'Comprehensive academic institution website with online admission inquiry form, notice board, and parent information hub.',
-      imageBg: 'from-emerald-600/30 to-teal-900/40',
+      imageUrl: '/portfolio/st_jude_school.png',
       tags: ['School Site', 'Admission Form', 'Notice Board'],
       metrics: '2.5k Students Enrolled',
     },
@@ -64,9 +64,9 @@ export const Portfolio: React.FC = () => {
       category: 'E-commerce',
       clientName: 'Urban Wear Co.',
       description: 'Fast-loading mobile e-commerce store with product catalog filtering, cart checkout, and automated customer order notifications.',
-      imageBg: 'from-cyan-600/30 to-slate-900/40',
+      imageUrl: '/portfolio/urban_wear.png',
       tags: ['E-commerce', 'Payment Gateway', 'Cart System'],
-      metrics: '$120k Sales Generated',
+      metrics: '₹12,40,000 Sales Generated',
     },
   ];
 
@@ -116,23 +116,36 @@ export const Portfolio: React.FC = () => {
       <section className="py-8 px-6 max-w-7xl mx-auto relative z-10 mb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {filteredProjects.map(project => (
-            <div key={project.id} className="huly-card overflow-hidden group flex flex-col justify-between">
-              {/* Card Header Visual Mockup */}
-              <div className={`h-52 bg-gradient-to-tr ${project.imageBg} relative p-6 flex flex-col justify-between border-b border-[#4a4b50]/40`}>
-                <div className="flex justify-between items-start">
-                  <span className="tag-pill bg-[#090a0c]/80 text-[#ff8964] border border-[#ff8964]/40 font-mono text-[10px]">
-                    {project.category}
-                  </span>
-                  <div className="bg-[#090a0c]/80 backdrop-blur-md px-3 py-1 rounded-full border border-emerald-500/40 text-emerald-400 font-mono text-[10px] font-semibold">
-                    {project.metrics}
-                  </div>
-                </div>
+            <div key={project.id} className="huly-card overflow-hidden group flex flex-col justify-between transition-all transform hover:-translate-y-2 hover:shadow-[0_0_35px_rgba(86,131,218,0.25)] border-[#4a4b50]/50 hover:border-[#5683da]/50">
+              {/* Real Project Image Showcase Container */}
+              <div className="h-64 relative overflow-hidden bg-[#111111] border-b border-[#4a4b50]/40">
+                <img
+                  src={project.imageUrl}
+                  alt={project.title}
+                  className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                  onError={(e) => {
+                    // Fallback to dark gradient if image load fails
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
 
-                <div>
-                  <span className="text-xs font-mono text-[#95979e] uppercase block">{project.clientName}</span>
-                  <h3 className="text-xl font-extrabold text-white group-hover:text-[#5683da] transition-colors">
-                    {project.title}
-                  </h3>
+                {/* Glassmorphic Overlay Header Badges */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#090a0c] via-transparent to-black/60 p-5 flex flex-col justify-between pointer-events-none">
+                  <div className="flex justify-between items-start pointer-events-auto">
+                    <span className="tag-pill bg-[#090a0c]/90 text-[#ff8964] border border-[#ff8964]/40 font-mono text-[10px] backdrop-blur-md">
+                      {project.category}
+                    </span>
+                    <div className="bg-[#090a0c]/90 backdrop-blur-md px-3 py-1 rounded-full border border-emerald-500/40 text-emerald-400 font-mono text-[10px] font-semibold shadow-md">
+                      {project.metrics}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-mono text-[#5683da] uppercase font-bold tracking-wider block drop-shadow">{project.clientName}</span>
+                    <h3 className="text-xl font-extrabold text-white group-hover:text-[#5683da] transition-colors drop-shadow-md">
+                      {project.title}
+                    </h3>
+                  </div>
                 </div>
               </div>
 
@@ -153,7 +166,7 @@ export const Portfolio: React.FC = () => {
 
                   <Link
                     to={`/contact?service=${encodeURIComponent(project.title)}`}
-                    className="btn-pill-secondary w-full py-2.5 text-xs text-center flex items-center justify-center space-x-2"
+                    className="btn-pill-secondary w-full py-2.5 text-xs text-center flex items-center justify-center space-x-2 group-hover:border-[#5683da]"
                   >
                     <span>Request Similar Project</span>
                     <ArrowRight className="w-3.5 h-3.5 text-[#5683da]" />
