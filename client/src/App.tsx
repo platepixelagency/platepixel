@@ -13,6 +13,7 @@ import { Contact } from './pages/Contact';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
+import { LegalPolicies } from './pages/LegalPolicies';
 
 export const App: React.FC = () => {
   return (
@@ -30,6 +31,12 @@ export const App: React.FC = () => {
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+
+                {/* Legal & Compliance Policies */}
+                <Route path="/privacy" element={<LegalPolicies />} />
+                <Route path="/terms" element={<LegalPolicies />} />
+                <Route path="/sla" element={<LegalPolicies />} />
+                <Route path="/legal" element={<LegalPolicies />} />
 
                 {/* Portal Authentication */}
                 <Route path="/login" element={<Login />} />

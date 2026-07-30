@@ -86,9 +86,9 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 pt-6 border-t border-[#4a4b50]/30 flex flex-col md:flex-row items-center justify-between text-[11px] text-[#95979e] gap-3">
         <p>© {new Date().getFullYear()} PlatePixel Agency Management Platform. All rights reserved.</p>
         <div className="flex items-center space-x-5">
-          <span className="hover:text-white cursor-pointer transition-colors">Privacy Policy</span>
-          <span className="hover:text-white cursor-pointer transition-colors">Terms of Service</span>
-          <span className="hover:text-white cursor-pointer transition-colors">SLA Agreement</span>
+          <Link to="/privacy" className="hover:text-white cursor-pointer transition-colors">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-white cursor-pointer transition-colors">Terms of Service</Link>
+          <Link to="/sla" className="hover:text-white cursor-pointer transition-colors">SLA Agreement</Link>
         </div>
       </div>
     </footer>
