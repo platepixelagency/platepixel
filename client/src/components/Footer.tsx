@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Phone, ArrowRight, Globe, Facebook, Instagram, Github, MessageCircle } from 'lucide-react';
+import { subscribeToRealtimeTable } from '../services/supabase';
 
 interface SiteSettings {
   supportEmail: string;
@@ -44,6 +45,15 @@ export const Footer: React.FC = () => {
         if (res?.settings) setSettings(res.settings);
       })
       .catch((err: any) => console.log('Site settings default fallbacks active:', err));
+
+    // Supabase Realtime live sync
+    const channel = subscribeToRealtimeTable('site_settings', (payload) => {
+      if (payload.new) setSettings((prev) => ({ ...prev, ...payload.new }));
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
 
   return (

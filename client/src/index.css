@@ -279,6 +279,7 @@ body {
   background-size: 200% auto;
   color: transparent;
   -webkit-background-clip: text;
+  background-clip: text;
   animation: textShimmer 4s ease-in-out infinite;
 }
 

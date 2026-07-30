@@ -20,6 +20,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { CountUpNumber } from '../components/CountUpNumber';
+import { subscribeToRealtimeTable } from '../services/supabase';
 import { Footer } from '../components/Footer';
 
 export const Home: React.FC = () => {
@@ -40,6 +41,15 @@ export const Home: React.FC = () => {
         if (data.stats) setHeroStats(data.stats);
       })
       .catch((err) => console.error('Failed to load hero stats:', err));
+
+    // Supabase Realtime live sync for hero stats & metrics banner
+    const channel = subscribeToRealtimeTable('hero_stats', (payload) => {
+      if (payload.new) setHeroStats((prev) => ({ ...prev, ...payload.new }));
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
   return (
     <div className="bg-[#090a0c] text-white min-h-screen relative overflow-hidden">
