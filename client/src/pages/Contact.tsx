@@ -144,7 +144,7 @@ export const Contact: React.FC = () => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Sarah Jenkins"
-                      className="huly-input pl-10"
+                      className="huly-input huly-input-icon"
                     />
                   </div>
                 </div>
@@ -160,7 +160,7 @@ export const Contact: React.FC = () => {
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
                       placeholder="Apex Culinary Group"
-                      className="huly-input pl-10"
+                      className="huly-input huly-input-icon"
                     />
                   </div>
                 </div>
@@ -179,7 +179,7 @@ export const Contact: React.FC = () => {
                       value={mobile}
                       onChange={(e) => setMobile(e.target.value)}
                       placeholder="+1 (555) 019-2831"
-                      className="huly-input pl-10"
+                      className="huly-input huly-input-icon"
                     />
                   </div>
                 </div>
@@ -196,7 +196,7 @@ export const Contact: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="sarah@apex.com"
-                      className="huly-input pl-10"
+                      className="huly-input huly-input-icon"
                     />
                   </div>
                 </div>
@@ -251,7 +251,7 @@ export const Contact: React.FC = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Tell us about your business goals, target audience, preferred launch date, or specific feature requests..."
-                    className="huly-input pl-10 pt-3"
+                    className="huly-input huly-input-icon pt-3"
                   ></textarea>
                 </div>
               </div>

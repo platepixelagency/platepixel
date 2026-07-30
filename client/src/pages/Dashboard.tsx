@@ -6,6 +6,7 @@ import { ProjectManagement } from '../components/projects/ProjectManagement';
 import { InvoiceManagement } from '../components/invoices/InvoiceManagement';
 import { SupportManagement } from '../components/support/SupportManagement';
 import { AutomationManagement } from '../components/automation/AutomationManagement';
+import { CatalogManagement } from '../components/catalog/CatalogManagement';
 import { ClientPortal } from '../components/portal/ClientPortal';
 import { 
   ShieldCheck, 
@@ -20,12 +21,13 @@ import {
   Building,
   CheckCircle,
   LifeBuoy,
-  Zap
+  Zap,
+  Layers
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'clients' | 'projects' | 'invoices' | 'tickets' | 'automation'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'clients' | 'projects' | 'invoices' | 'tickets' | 'automation' | 'catalog'>('overview');
   const [health, setHealth] = useState<{
     status: string;
     database: string;
@@ -35,6 +37,9 @@ export const Dashboard: React.FC = () => {
     projectCount: number;
     invoiceCount: number;
     ticketCount: number;
+    serviceCount: number;
+    pricingCount: number;
+    portfolioCount: number;
     timestamp: string;
   } | null>(null);
   const [loadingHealth, setLoadingHealth] = useState(true);
@@ -153,6 +158,18 @@ export const Dashboard: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('catalog')}
+              className={`flex items-center space-x-2 py-2 px-5 rounded-full text-xs font-medium transition-all ${
+                activeTab === 'catalog'
+                  ? 'bg-[#5683da] text-white shadow-lg shadow-[#5683da]/20'
+                  : 'bg-[#111111] border border-[#4a4b50] text-[#95979e] hover:text-white'
+              }`}
+            >
+              <Layers className="w-4 h-4 text-cyan-400" />
+              <span>Services, Prices & Portfolio</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('tickets')}
               className={`flex items-center space-x-2 py-2 px-5 rounded-full text-xs font-medium transition-all ${
                 activeTab === 'tickets'
@@ -192,6 +209,8 @@ export const Dashboard: React.FC = () => {
           <ProjectManagement />
         ) : isAdminOrTeam && activeTab === 'invoices' ? (
           <InvoiceManagement />
+        ) : isAdminOrTeam && activeTab === 'catalog' ? (
+          <CatalogManagement />
         ) : isAdminOrTeam && activeTab === 'tickets' ? (
           <SupportManagement />
         ) : isAdminOrTeam && activeTab === 'automation' ? (
@@ -207,7 +226,7 @@ export const Dashboard: React.FC = () => {
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="tag-pill bg-[#5683da]/20 text-[#5683da] border border-[#5683da]/30 flex items-center space-x-1">
                       <Sparkles className="w-3 h-3 text-[#ff8964]" />
-                      <span>Phase 9 Automation Active</span>
+                      <span>Services, Pricing & Portfolio Catalog Manager Active</span>
                     </span>
                     <span className="text-xs text-[#95979e] font-mono">ID: {user?.id.substring(0, 8)}...</span>
                   </div>
@@ -216,7 +235,7 @@ export const Dashboard: React.FC = () => {
                     Welcome, {user?.name}
                   </h1>
                   <p className="text-sm text-[#95979e] mt-1 max-w-xl">
-                    Automated email notifications, renewal warning audits, client portals, and billing engines operating on your platform.
+                    Manage agency services, pricing packages, portfolio showcases, client billing, project development, and lead pipelines from your dashboard.
                   </p>
                 </div>
 
@@ -235,14 +254,13 @@ export const Dashboard: React.FC = () => {
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="huly-card p-5 flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-400 flex items-center justify-center">
-                  <Zap className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                  <Layers className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#95979e] uppercase font-mono">Automation Engine</div>
-                  <div className="text-sm font-semibold text-emerald-400 flex items-center space-x-1.5 mt-0.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Triggers Active</span>
+                  <div className="text-xs text-[#95979e] uppercase font-mono">Agency Catalog</div>
+                  <div className="text-sm font-semibold text-white mt-0.5">
+                    Services, Pricing & Portfolio
                   </div>
                 </div>
               </div>
@@ -297,6 +315,16 @@ export const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
+                <div className="huly-card p-5 border-cyan-500/40 bg-cyan-500/5 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-white text-sm mb-1">Services, Prices & Portfolio</h3>
+                    <p className="text-[11px] text-[#95979e]">Add, edit, or remove custom agency services, plans, and projects.</p>
+                  </div>
+                  <button onClick={() => setActiveTab('catalog')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-cyan-600 hover:bg-cyan-500 text-white font-bold self-start">
+                    Catalog Manager →
+                  </button>
+                </div>
+
                 <div className="huly-card p-5 border-emerald-500/40 bg-emerald-500/5 flex flex-col justify-between">
                   <div>
                     <h3 className="font-bold text-white text-sm mb-1">Client Directory</h3>
@@ -314,16 +342,6 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <button onClick={() => setActiveTab('invoices')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-amber-600 hover:bg-amber-500 text-black font-bold self-start">
                     Invoices & Payments →
-                  </button>
-                </div>
-
-                <div className="huly-card p-5 border-yellow-500/40 bg-yellow-500/5 flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-bold text-white text-sm mb-1">Automation Engine</h3>
-                    <p className="text-[11px] text-[#95979e]">Run renewal audits and view notification logs.</p>
-                  </div>
-                  <button onClick={() => setActiveTab('automation')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-yellow-500 hover:bg-yellow-400 text-black font-bold self-start">
-                    Automation Hub →
                   </button>
                 </div>
               </div>

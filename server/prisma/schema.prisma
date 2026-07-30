@@ -136,3 +136,39 @@ model Document {
   fileUrl   String
   createdAt DateTime @default(now())
 }
+
+model AgencyService {
+  id          String   @id @default(uuid())
+  title       String
+  category    String
+  price       String
+  description String
+  features    String
+  isPopular   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AgencyPricing {
+  id          String   @id @default(uuid())
+  title       String
+  price       String
+  period      String
+  description String
+  features    String
+  highlighted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AgencyPortfolio {
+  id          String   @id @default(uuid())
+  title       String
+  category    String
+  clientName  String
+  imageUrl    String
+  liveUrl     String
+  tags        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
