@@ -42,18 +42,21 @@ body {
   z-index: 0;
 }
 
-/* Cosmic Glow Cards */
+/* Cosmic 3D Perspective Glow Cards */
 .huly-card {
   background-color: #111111;
   border: 1px solid #4a4b50;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  transition: all 0.2s ease-in-out;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
 
 .huly-card:hover {
-  border-color: rgba(86, 131, 218, 0.5);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+  border-color: rgba(86, 131, 218, 0.6);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(86, 131, 218, 0.2);
+  transform: translateY(-6px) rotateX(2deg) scale(1.01);
 }
 
 /* Pill Button Styles */
@@ -202,14 +205,14 @@ body {
   }
 }
 
-@keyframes pageSwitchIn {
-  from {
+@keyframes pageSwitch3D {
+  0% {
     opacity: 0;
-    transform: translateY(12px) scale(0.995);
+    transform: perspective(1200px) rotateX(6deg) translateZ(-40px) translateY(18px);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: perspective(1200px) rotateX(0deg) translateZ(0) translateY(0);
   }
 }
 
@@ -227,5 +230,6 @@ body {
 }
 
 .animate-page-switch {
-  animation: pageSwitchIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageSwitch3D 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-style: preserve-3d;
 }
