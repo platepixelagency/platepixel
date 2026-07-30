@@ -4,6 +4,7 @@ import { LeadCRM } from '../components/crm/LeadCRM';
 import { ClientManagement } from '../components/clients/ClientManagement';
 import { ProjectManagement } from '../components/projects/ProjectManagement';
 import { InvoiceManagement } from '../components/invoices/InvoiceManagement';
+import { SupportManagement } from '../components/support/SupportManagement';
 import { ClientPortal } from '../components/portal/ClientPortal';
 import { 
   ShieldCheck, 
@@ -17,12 +18,12 @@ import {
   LayoutDashboard,
   Building,
   CheckCircle,
-  CreditCard
+  LifeBuoy
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'clients' | 'projects' | 'invoices'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'clients' | 'projects' | 'invoices' | 'tickets'>('overview');
   const [health, setHealth] = useState<{
     status: string;
     database: string;
@@ -31,6 +32,7 @@ export const Dashboard: React.FC = () => {
     clientCount: number;
     projectCount: number;
     invoiceCount: number;
+    ticketCount: number;
     timestamp: string;
   } | null>(null);
   const [loadingHealth, setLoadingHealth] = useState(true);
@@ -51,7 +53,6 @@ export const Dashboard: React.FC = () => {
   const isAdminOrTeam = user?.role === 'ADMIN' || user?.role === 'TEAM_MEMBER';
   const isClient = user?.role === 'CLIENT';
 
-  // If user is Client, automatically present the Client Portal Workspace
   if (isClient) {
     return (
       <div className="min-h-[calc(100vh-65px)] bg-[#090a0c] p-6 md:p-10">
@@ -148,6 +149,23 @@ export const Dashboard: React.FC = () => {
                 </span>
               )}
             </button>
+
+            <button
+              onClick={() => setActiveTab('tickets')}
+              className={`flex items-center space-x-2 py-2 px-5 rounded-full text-xs font-medium transition-all ${
+                activeTab === 'tickets'
+                  ? 'bg-[#5683da] text-white shadow-lg shadow-[#5683da]/20'
+                  : 'bg-[#111111] border border-[#4a4b50] text-[#95979e] hover:text-white'
+              }`}
+            >
+              <LifeBuoy className="w-4 h-4 text-rose-400" />
+              <span>Support Tickets</span>
+              {health?.ticketCount !== undefined && (
+                <span className="w-5 h-5 rounded-full bg-rose-400 text-black text-[10px] font-bold flex items-center justify-center">
+                  {health.ticketCount}
+                </span>
+              )}
+            </button>
           </div>
         )}
 
@@ -160,6 +178,8 @@ export const Dashboard: React.FC = () => {
           <ProjectManagement />
         ) : isAdminOrTeam && activeTab === 'invoices' ? (
           <InvoiceManagement />
+        ) : isAdminOrTeam && activeTab === 'tickets' ? (
+          <SupportManagement />
         ) : (
           /* Tab Content: Workspace Overview */
           <div className="space-y-8">
@@ -171,7 +191,7 @@ export const Dashboard: React.FC = () => {
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="tag-pill bg-[#5683da]/20 text-[#5683da] border border-[#5683da]/30 flex items-center space-x-1">
                       <Sparkles className="w-3 h-3 text-[#ff8964]" />
-                      <span>Phase 7 Client Portal Active</span>
+                      <span>Phase 8 Support System Active</span>
                     </span>
                     <span className="text-xs text-[#95979e] font-mono">ID: {user?.id.substring(0, 8)}...</span>
                   </div>
@@ -180,7 +200,7 @@ export const Dashboard: React.FC = () => {
                     Welcome, {user?.name}
                   </h1>
                   <p className="text-sm text-[#95979e] mt-1 max-w-xl">
-                    Manage agency billing, collect client payments, track project development, and run lead pipelines from your dashboard.
+                    Manage client support tickets, agency billing, project development, and lead pipelines from your dashboard.
                   </p>
                 </div>
 
@@ -198,6 +218,18 @@ export const Dashboard: React.FC = () => {
 
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="huly-card p-5 flex items-center space-x-4">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+                  <LifeBuoy className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-[#95979e] uppercase font-mono">Support Tickets</div>
+                  <div className="text-sm font-semibold text-white mt-0.5">
+                    {health?.ticketCount ?? 0} Tickets Logged
+                  </div>
+                </div>
+              </div>
+
               <div className="huly-card p-5 flex items-center space-x-4">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
                   <FileText className="w-5 h-5" />
@@ -233,23 +265,11 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="huly-card p-5 flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-xl bg-[#ff8964]/10 text-[#ff8964] flex items-center justify-center">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-[#95979e] uppercase font-mono">CRM Pipeline</div>
-                  <div className="text-sm font-semibold text-white mt-0.5">
-                    {health?.leadCount ?? 0} Captured Leads
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Quick Access Grid */}
             {isAdminOrTeam && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="huly-card p-5 border-[#5683da]/40 bg-[#5683da]/5 flex flex-col justify-between">
                   <div>
                     <h3 className="font-bold text-white text-sm mb-1">Lead CRM Pipeline</h3>
@@ -270,23 +290,13 @@ export const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="huly-card p-5 border-purple-500/40 bg-purple-500/5 flex flex-col justify-between">
+                <div className="huly-card p-5 border-rose-500/40 bg-rose-500/5 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-white text-sm mb-1">Projects Board</h3>
-                    <p className="text-[11px] text-[#95979e]">Track milestone status boards and delivery target dates.</p>
+                    <h3 className="font-bold text-white text-sm mb-1">Support Helpdesk</h3>
+                    <p className="text-[11px] text-[#95979e]">Respond to client tickets, content edits, and technical support.</p>
                   </div>
-                  <button onClick={() => setActiveTab('projects')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-purple-600 hover:bg-purple-500 self-start">
-                    Projects Board →
-                  </button>
-                </div>
-
-                <div className="huly-card p-5 border-amber-500/40 bg-amber-500/5 flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-bold text-white text-sm mb-1">Invoices & Payments</h3>
-                    <p className="text-[11px] text-[#95979e]">Issue invoices, record payments, and print statements.</p>
-                  </div>
-                  <button onClick={() => setActiveTab('invoices')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-amber-600 hover:bg-amber-500 text-black font-bold self-start">
-                    Invoices & Payments →
+                  <button onClick={() => setActiveTab('tickets')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-rose-600 hover:bg-rose-500 text-white font-bold self-start">
+                    Helpdesk Tickets →
                   </button>
                 </div>
               </div>
