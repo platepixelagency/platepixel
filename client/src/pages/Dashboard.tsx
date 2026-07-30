@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LeadCRM } from '../components/crm/LeadCRM';
 import { ClientManagement } from '../components/clients/ClientManagement';
+import { ProjectManagement } from '../components/projects/ProjectManagement';
 import { 
   ShieldCheck, 
   Database, 
@@ -18,13 +19,14 @@ import {
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'clients'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'clients' | 'projects'>('overview');
   const [health, setHealth] = useState<{
     status: string;
     database: string;
     userCount: number;
     leadCount: number;
     clientCount: number;
+    projectCount: number;
     timestamp: string;
   } | null>(null);
   const [loadingHealth, setLoadingHealth] = useState(true);
@@ -96,6 +98,23 @@ export const Dashboard: React.FC = () => {
                 </span>
               )}
             </button>
+
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`flex items-center space-x-2 py-2 px-5 rounded-full text-xs font-medium transition-all ${
+                activeTab === 'projects'
+                  ? 'bg-[#5683da] text-white shadow-lg shadow-[#5683da]/20'
+                  : 'bg-[#111111] border border-[#4a4b50] text-[#95979e] hover:text-white'
+              }`}
+            >
+              <Briefcase className="w-4 h-4 text-purple-400" />
+              <span>Projects & Milestones</span>
+              {health?.projectCount !== undefined && (
+                <span className="w-5 h-5 rounded-full bg-purple-400 text-black text-[10px] font-bold flex items-center justify-center">
+                  {health.projectCount}
+                </span>
+              )}
+            </button>
           </div>
         )}
 
@@ -104,6 +123,8 @@ export const Dashboard: React.FC = () => {
           <LeadCRM />
         ) : isAdminOrTeam && activeTab === 'clients' ? (
           <ClientManagement />
+        ) : isAdminOrTeam && activeTab === 'projects' ? (
+          <ProjectManagement />
         ) : (
           /* Tab Content: Workspace Overview */
           <div className="space-y-8">
@@ -115,7 +136,7 @@ export const Dashboard: React.FC = () => {
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="tag-pill bg-[#5683da]/20 text-[#5683da] border border-[#5683da]/30 flex items-center space-x-1">
                       <Sparkles className="w-3 h-3 text-[#ff8964]" />
-                      <span>Phase 4 Client Management Active</span>
+                      <span>Phase 5 Project Management Active</span>
                     </span>
                     <span className="text-xs text-[#95979e] font-mono">ID: {user?.id.substring(0, 8)}...</span>
                   </div>
@@ -124,7 +145,7 @@ export const Dashboard: React.FC = () => {
                     Welcome, {user?.name}
                   </h1>
                   <p className="text-sm text-[#95979e] mt-1 max-w-xl">
-                    Manage agency clients, recurring service plans, renewal schedules, and lead pipelines from your dashboard.
+                    Track project milestone delivery dates, client account renewals, and lead pipelines from your central workspace.
                   </p>
                 </div>
 
@@ -143,13 +164,25 @@ export const Dashboard: React.FC = () => {
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="huly-card p-5 flex items-center space-x-4">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-[#95979e] uppercase font-mono">Active Projects</div>
+                  <div className="text-sm font-semibold text-white mt-0.5">
+                    {health?.projectCount ?? 0} Projects Tracked
+                  </div>
+                </div>
+              </div>
+
+              <div className="huly-card p-5 flex items-center space-x-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
                   <Building className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="text-xs text-[#95979e] uppercase font-mono">Client Accounts</div>
                   <div className="text-sm font-semibold text-white mt-0.5">
-                    {health?.clientCount ?? 0} Clients Managed
+                    {health?.clientCount ?? 0} Active Clients
                   </div>
                 </div>
               </div>
@@ -161,7 +194,7 @@ export const Dashboard: React.FC = () => {
                 <div>
                   <div className="text-xs text-[#95979e] uppercase font-mono">CRM Pipeline</div>
                   <div className="text-sm font-semibold text-white mt-0.5">
-                    {health?.leadCount ?? 0} Active Leads
+                    {health?.leadCount ?? 0} Captured Leads
                   </div>
                 </div>
               </div>
@@ -178,40 +211,38 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="huly-card p-5 flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-[#95979e] uppercase font-mono">Total Users</div>
-                  <div className="text-sm font-semibold text-white mt-0.5">
-                    {health?.userCount ?? 1} User Logins
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Quick Access Card */}
             {isAdminOrTeam && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="huly-card p-6 border-[#5683da]/40 bg-[#5683da]/5 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-white text-base mb-1">Open Lead CRM Pipeline</h3>
-                    <p className="text-xs text-[#95979e]">Track incoming website inquiries, move leads through pipeline stages, and perform 1-click client conversions.</p>
+                    <h3 className="font-bold text-white text-base mb-1">Lead CRM Pipeline</h3>
+                    <p className="text-xs text-[#95979e]">Track incoming inquiries and perform 1-click client conversions.</p>
                   </div>
                   <button onClick={() => setActiveTab('leads')} className="mt-4 btn-pill-primary py-2 px-5 text-xs self-start">
-                    Open Lead CRM →
+                    Lead CRM →
                   </button>
                 </div>
 
                 <div className="huly-card p-6 border-emerald-500/40 bg-emerald-500/5 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-white text-base mb-1">Open Client Directory</h3>
-                    <p className="text-xs text-[#95979e]">Manage agency client accounts, edit renewal schedules, and inspect associated projects & invoices.</p>
+                    <h3 className="font-bold text-white text-base mb-1">Client Directory</h3>
+                    <p className="text-xs text-[#95979e]">Manage agency client accounts and renewal schedules.</p>
                   </div>
                   <button onClick={() => setActiveTab('clients')} className="mt-4 btn-pill-primary py-2 px-5 text-xs bg-emerald-600 hover:bg-emerald-500 self-start">
-                    Open Client Directory →
+                    Client Directory →
+                  </button>
+                </div>
+
+                <div className="huly-card p-6 border-purple-500/40 bg-purple-500/5 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-white text-base mb-1">Projects & Milestones</h3>
+                    <p className="text-xs text-[#95979e]">Track development boards, QA testing, and delivery dates.</p>
+                  </div>
+                  <button onClick={() => setActiveTab('projects')} className="mt-4 btn-pill-primary py-2 px-5 text-xs bg-purple-600 hover:bg-purple-500 self-start">
+                    Project Boards →
                   </button>
                 </div>
               </div>

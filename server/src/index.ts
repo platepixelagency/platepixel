@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import leadRoutes from './routes/leadRoutes.js';
 import clientRoutes from './routes/clientRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
 import { prisma } from './prisma.js';
 
 dotenv.config();
@@ -20,6 +21,7 @@ app.get('/api/health', async (_req, res) => {
     const userCount = await prisma.user.count();
     const leadCount = await prisma.lead.count();
     const clientCount = await prisma.client.count();
+    const projectCount = await prisma.project.count();
     res.status(200).json({
       status: 'healthy',
       platform: 'PlatePixel Agency Management API',
@@ -27,6 +29,7 @@ app.get('/api/health', async (_req, res) => {
       userCount,
       leadCount,
       clientCount,
+      projectCount,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
@@ -42,6 +45,7 @@ app.get('/api/health', async (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/clients', clientRoutes);
+app.use('/api/projects', projectRoutes);
 
 // Global Error Handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
