@@ -216,7 +216,7 @@ export const LeadCRM: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search leads by name, business, service..."
-            className="huly-input pl-10"
+            className="huly-input huly-input-icon"
           />
         </div>
 

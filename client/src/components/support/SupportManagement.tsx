@@ -168,7 +168,7 @@ export const SupportManagement: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search tickets..."
-              className="huly-input pl-10"
+              className="huly-input huly-input-icon"
             />
           </div>
 

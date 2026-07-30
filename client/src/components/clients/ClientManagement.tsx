@@ -19,7 +19,9 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Upload,
+  FolderPlus
 } from 'lucide-react';
 
 interface ExtendedClient extends Client {
@@ -42,6 +44,10 @@ export const ClientManagement: React.FC = () => {
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
   const [editClient, setEditClient] = useState<ExtendedClient | null>(null);
 
+  // Quick action modals for specific client
+  const [invoiceModalClient, setInvoiceModalClient] = useState<ExtendedClient | null>(null);
+  const [docModalClient, setDocModalClient] = useState<ExtendedClient | null>(null);
+
   // New Client Form State
   const [newClient, setNewClient] = useState({
     name: '',
@@ -50,6 +56,20 @@ export const ClientManagement: React.FC = () => {
     phone: '',
     address: '',
     renewalDate: '',
+  });
+
+  // Quick Invoice Form State
+  const [invoiceForm, setInvoiceForm] = useState({
+    invoiceNumber: `INV-${Math.floor(1000 + Math.random() * 9000)}`,
+    amount: '499',
+    dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+    description: 'Web development & retainer service fee',
+  });
+
+  // Quick Document Form State
+  const [docForm, setDocForm] = useState({
+    fileName: '',
+    fileUrl: '',
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -121,8 +141,68 @@ export const ClientManagement: React.FC = () => {
     }
   };
 
+  const handleQuickCreateInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!invoiceModalClient) return;
+    setSubmitting(true);
+
+    try {
+      await fetchWithAuth('/invoices', {
+        method: 'POST',
+        body: JSON.stringify({
+          clientId: invoiceModalClient.id,
+          invoiceNumber: invoiceForm.invoiceNumber,
+          amount: parseFloat(invoiceForm.amount) || 0,
+          status: 'UNPAID',
+          dueDate: invoiceForm.dueDate,
+          description: invoiceForm.description,
+        }),
+      });
+
+      alert(`Invoice ${invoiceForm.invoiceNumber} generated for ${invoiceModalClient.companyName}!`);
+      setInvoiceModalClient(null);
+      setInvoiceForm({
+        invoiceNumber: `INV-${Math.floor(1000 + Math.random() * 9000)}`,
+        amount: '499',
+        dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+        description: 'Web development & retainer service fee',
+      });
+      loadClients();
+    } catch (err: any) {
+      alert(err.message || 'Failed to generate invoice');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleQuickUploadDoc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!docModalClient) return;
+    setSubmitting(true);
+
+    try {
+      await fetchWithAuth('/portal/documents', {
+        method: 'POST',
+        body: JSON.stringify({
+          clientId: docModalClient.id,
+          fileName: docForm.fileName,
+          fileUrl: docForm.fileUrl,
+        }),
+      });
+
+      alert(`Document "${docForm.fileName}" uploaded for ${docModalClient.companyName}!`);
+      setDocModalClient(null);
+      setDocForm({ fileName: '', fileUrl: '' });
+      loadClients();
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload document');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleDeleteClient = async (clientId: string) => {
-    if (!confirm('Are you sure you want to delete this client account and user login?')) return;
+    if (!confirm('Are you sure you want to delete this client account and all related projects/invoices?')) return;
 
     try {
       await fetchWithAuth(`/clients/${clientId}`, {
@@ -177,7 +257,7 @@ export const ClientManagement: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search clients..."
-              className="huly-input pl-10"
+              className="huly-input huly-input-icon"
             />
           </div>
 
@@ -263,18 +343,50 @@ export const ClientManagement: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Action Row */}
-                <div className="flex items-center space-x-2 pt-2">
+                {/* Quick Action Button Row */}
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      setInvoiceModalClient(client);
+                      setInvoiceForm({
+                        invoiceNumber: `INV-${Math.floor(1000 + Math.random() * 9000)}`,
+                        amount: '499',
+                        dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+                        description: 'Web development & retainer service fee',
+                      });
+                    }}
+                    className="btn-pill-secondary py-1.5 px-2 text-[11px] text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10 flex items-center justify-center space-x-1"
+                    title="Generate Invoice for Client"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>+ Invoice</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setDocModalClient(client);
+                      setDocForm({ fileName: '', fileUrl: '' });
+                    }}
+                    className="btn-pill-secondary py-1.5 px-2 text-[11px] text-purple-400 border-purple-500/40 hover:bg-purple-500/10 flex items-center justify-center space-x-1"
+                    title="Upload Contract PDF for Client"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>+ Upload Doc</span>
+                  </button>
+                </div>
+
+                {/* Standard Actions Row */}
+                <div className="flex items-center space-x-2 pt-1">
                   <button
                     onClick={() => viewClientDetails(client.id)}
-                    className="btn-pill-secondary flex-1 py-2 text-xs text-center"
+                    className="btn-pill-secondary flex-1 py-1.5 text-xs text-center"
                   >
                     View Profile
                   </button>
                   <button
                     onClick={() => setEditClient(client)}
                     className="btn-pill-secondary p-2 text-xs text-[#5683da]"
-                    title="Edit Client"
+                    title="Edit Client Profile"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
@@ -292,6 +404,115 @@ export const ClientManagement: React.FC = () => {
         )}
       </div>
 
+      {/* MODAL: QUICK GENERATE INVOICE FOR CLIENT */}
+      {invoiceModalClient && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="huly-card max-w-md w-full p-6 space-y-4 relative border-emerald-500/50">
+            <button onClick={() => setInvoiceModalClient(null)} className="absolute top-4 right-4 text-[#95979e] hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-bold text-white">Generate Invoice</h3>
+            <p className="text-xs text-[#95979e]">Create invoice statement for <span className="text-white font-bold">{invoiceModalClient.companyName}</span> ({invoiceModalClient.user.name})</p>
+
+            <form onSubmit={handleQuickCreateInvoice} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[#95979e] mb-1">Invoice Number *</label>
+                <input
+                  type="text"
+                  required
+                  value={invoiceForm.invoiceNumber}
+                  onChange={(e) => setInvoiceForm({ ...invoiceForm, invoiceNumber: e.target.value })}
+                  className="huly-input font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#95979e] mb-1">Amount ($ USD) *</label>
+                <input
+                  type="number"
+                  required
+                  value={invoiceForm.amount}
+                  onChange={(e) => setInvoiceForm({ ...invoiceForm, amount: e.target.value })}
+                  placeholder="499"
+                  className="huly-input font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#95979e] mb-1">Payment Due Date *</label>
+                <input
+                  type="date"
+                  required
+                  value={invoiceForm.dueDate}
+                  onChange={(e) => setInvoiceForm({ ...invoiceForm, dueDate: e.target.value })}
+                  className="huly-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#95979e] mb-1">Description / Notes</label>
+                <input
+                  type="text"
+                  value={invoiceForm.description}
+                  onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
+                  placeholder="Web maintenance & retainer fee"
+                  className="huly-input"
+                />
+              </div>
+
+              <button type="submit" disabled={submitting} className="btn-pill-primary w-full py-2.5 text-xs bg-emerald-500 hover:bg-emerald-600 border-none text-white font-bold mt-2">
+                {submitting ? 'Generating Invoice...' : `Issue Invoice (${invoiceForm.invoiceNumber})`}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: QUICK UPLOAD DOCUMENT FOR CLIENT */}
+      {docModalClient && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="huly-card max-w-md w-full p-6 space-y-4 relative border-purple-500/50">
+            <button onClick={() => setDocModalClient(null)} className="absolute top-4 right-4 text-[#95979e] hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-bold text-white">Upload Client Document PDF</h3>
+            <p className="text-xs text-[#95979e]">Upload agreement PDF or design asset for <span className="text-white font-bold">{docModalClient.companyName}</span></p>
+
+            <form onSubmit={handleQuickUploadDoc} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[#95979e] mb-1">Document Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={docForm.fileName}
+                  onChange={(e) => setDocForm({ ...docForm, fileName: e.target.value })}
+                  placeholder="Master Service Agreement SLA.pdf"
+                  className="huly-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#95979e] mb-1">File URL / Download Link *</label>
+                <input
+                  type="text"
+                  required
+                  value={docForm.fileUrl}
+                  onChange={(e) => setDocForm({ ...docForm, fileUrl: e.target.value })}
+                  placeholder="https://drive.google.com/file/... or /assets/doc.pdf"
+                  className="huly-input"
+                />
+              </div>
+
+              <button type="submit" disabled={submitting} className="btn-pill-primary w-full py-2.5 text-xs bg-purple-500 hover:bg-purple-600 border-none text-white font-bold mt-2">
+                {submitting ? 'Uploading Document...' : 'Publish Document to Client Portal'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal: Client Full Profile Drawer */}
       {selectedClient && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -303,16 +524,41 @@ export const ClientManagement: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#ff8964]/10 text-[#ff8964] flex items-center justify-center font-bold text-xl">
-                <Building className="w-6 h-6" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#4a4b50]/40 pb-4">
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#ff8964]/10 text-[#ff8964] flex items-center justify-center font-bold text-xl">
+                  <Building className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white">{selectedClient.companyName}</h3>
+                  <p className="text-xs text-[#95979e]">{selectedClient.user.name} • {selectedClient.user.email}</p>
+                  <span className="tag-pill bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] mt-2 inline-block font-mono">
+                    Renewal Date: {new Date(selectedClient.renewalDate).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 className="text-2xl font-bold text-white">{selectedClient.companyName}</h3>
-                <p className="text-xs text-[#95979e]">{selectedClient.user.name} • {selectedClient.user.email}</p>
-                <span className="tag-pill bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] mt-2 inline-block font-mono">
-                  Renewal Date: {new Date(selectedClient.renewalDate).toLocaleDateString()}
-                </span>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    const found = clients.find(c => c.id === selectedClient.id);
+                    if (found) setInvoiceModalClient(found);
+                  }}
+                  className="btn-pill-secondary py-1.5 px-3 text-xs text-emerald-400 border-emerald-500/40 flex items-center space-x-1"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>+ Invoice</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const found = clients.find(c => c.id === selectedClient.id);
+                    if (found) setDocModalClient(found);
+                  }}
+                  className="btn-pill-secondary py-1.5 px-3 text-xs text-purple-400 border-purple-500/40 flex items-center space-x-1"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>+ Doc</span>
+                </button>
               </div>
             </div>
 
@@ -368,7 +614,7 @@ export const ClientManagement: React.FC = () => {
       {/* Modal: Edit Client Profile */}
       {editClient && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="huly-card max-w-md w-full p-6 space-y-4 relative">
+          <div className="huly-card max-w-md w-full p-6 md:p-8 space-y-4 relative">
             <button
               onClick={() => setEditClient(null)}
               className="absolute top-4 right-4 text-[#95979e] hover:text-white"
@@ -391,32 +637,33 @@ export const ClientManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[#95979e] mb-1">Phone / Mobile</label>
+                <label className="block text-[#95979e] mb-1">Phone Number</label>
                 <input
                   type="text"
-                  value={editClient.phone}
+                  value={editClient.phone || ''}
                   onChange={(e) => setEditClient({ ...editClient, phone: e.target.value })}
                   className="huly-input"
                 />
               </div>
 
               <div>
-                <label className="block text-[#95979e] mb-1">Office Address</label>
+                <label className="block text-[#95979e] mb-1">Business Address</label>
                 <input
                   type="text"
-                  value={editClient.address}
+                  value={editClient.address || ''}
                   onChange={(e) => setEditClient({ ...editClient, address: e.target.value })}
                   className="huly-input"
                 />
               </div>
 
               <div>
-                <label className="block text-[#95979e] mb-1">Renewal Date</label>
+                <label className="block text-[#95979e] mb-1">Hosting / Domain Renewal Date *</label>
                 <input
                   type="date"
-                  value={editClient.renewalDate ? new Date(editClient.renewalDate).toISOString().split('T')[0] : ''}
+                  required
+                  value={new Date(editClient.renewalDate).toISOString().split('T')[0]}
                   onChange={(e) => setEditClient({ ...editClient, renewalDate: e.target.value })}
-                  className="huly-input font-mono"
+                  className="huly-input"
                 />
               </div>
 
@@ -431,10 +678,10 @@ export const ClientManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Manual Add Client */}
+      {/* Modal: Add New Client */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="huly-card max-w-md w-full p-6 space-y-4 relative">
+          <div className="huly-card max-w-md w-full p-6 md:p-8 space-y-4 relative">
             <button
               onClick={() => setShowAddModal(false)}
               className="absolute top-4 right-4 text-[#95979e] hover:text-white"
@@ -442,7 +689,8 @@ export const ClientManagement: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-xl font-bold text-white">Add New Client Account</h3>
+            <h3 className="text-xl font-bold text-white">Create New Client Account</h3>
+            <p className="text-xs text-[#95979e]">Client credentials will be generated automatically to grant access to the Client Portal.</p>
 
             <form onSubmit={handleCreateClient} className="space-y-3 text-xs">
               <div>
@@ -452,19 +700,19 @@ export const ClientManagement: React.FC = () => {
                   required
                   value={newClient.name}
                   onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                  placeholder="Robert Taylor"
+                  placeholder="Alex Rivers"
                   className="huly-input"
                 />
               </div>
 
               <div>
-                <label className="block text-[#95979e] mb-1">Login Email Address *</label>
+                <label className="block text-[#95979e] mb-1">Email Address *</label>
                 <input
                   type="email"
                   required
                   value={newClient.email}
                   onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                  placeholder="robert@company.com"
+                  placeholder="alex@riversbistro.com"
                   className="huly-input"
                 />
               </div>
@@ -476,7 +724,7 @@ export const ClientManagement: React.FC = () => {
                   required
                   value={newClient.companyName}
                   onChange={(e) => setNewClient({ ...newClient, companyName: e.target.value })}
-                  placeholder="Taylor Financials"
+                  placeholder="Rivers Bistro"
                   className="huly-input"
                 />
               </div>
@@ -492,13 +740,15 @@ export const ClientManagement: React.FC = () => {
                     className="huly-input"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-[#95979e] mb-1">Renewal Date</label>
+                  <label className="block text-[#95979e] mb-1">Renewal Date *</label>
                   <input
                     type="date"
+                    required
                     value={newClient.renewalDate}
                     onChange={(e) => setNewClient({ ...newClient, renewalDate: e.target.value })}
-                    className="huly-input font-mono"
+                    className="huly-input"
                   />
                 </div>
               </div>
@@ -508,30 +758,36 @@ export const ClientManagement: React.FC = () => {
                 disabled={submitting}
                 className="btn-pill-primary w-full py-2.5 text-xs mt-2"
               >
-                {submitting ? 'Creating Client...' : 'Create Client Account'}
+                {submitting ? 'Creating Account...' : 'Register Client Account'}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Credentials Created Result */}
+      {/* Modal: Client Account Created Credentials Popup */}
       {createdCredentials && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="huly-card max-w-md w-full p-6 text-center space-y-4 relative border-emerald-500/50">
+          <div className="huly-card max-w-md w-full p-8 space-y-6 text-center border-emerald-500/50">
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold text-white">Client Account Ready</h3>
-            <div className="bg-[#090a0c] p-4 rounded-xl border border-[#4a4b50]/40 text-left text-xs font-mono space-y-2">
-              <div className="text-[#95979e]">Login Email: <span className="text-white">{createdCredentials.userCredentials.email}</span></div>
-              <div className="text-[#95979e]">Temp Password: <span className="text-emerald-400 font-bold">{createdCredentials.userCredentials.temporaryPassword}</span></div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white">Client Portal Account Ready</h3>
+              <p className="text-xs text-[#95979e] mt-1">Provide these sign-in credentials to your client:</p>
             </div>
+
+            <div className="bg-[#090a0c] p-4 rounded-xl border border-[#4a4b50]/50 text-left text-xs font-mono space-y-2">
+              <div><span className="text-[#95979e]">Portal Login:</span> <span className="text-white font-bold">{createdCredentials.credentials?.email}</span></div>
+              <div><span className="text-[#95979e]">Temporary Password:</span> <span className="text-emerald-400 font-bold">{createdCredentials.credentials?.password}</span></div>
+            </div>
+
             <button
               onClick={() => setCreatedCredentials(null)}
-              className="btn-pill-primary w-full py-2 text-xs bg-emerald-600 hover:bg-emerald-500"
+              className="btn-pill-primary w-full py-2.5 text-xs"
             >
-              Done
+              Done & Close
             </button>
           </div>
         </div>

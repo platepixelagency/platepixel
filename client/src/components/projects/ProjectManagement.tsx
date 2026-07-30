@@ -226,7 +226,7 @@ export const ProjectManagement: React.FC = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search projects or clients..."
-          className="huly-input pl-10"
+          className="huly-input huly-input-icon"
         />
       </div>
 

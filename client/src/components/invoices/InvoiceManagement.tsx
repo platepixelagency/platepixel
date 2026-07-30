@@ -245,7 +245,7 @@ export const InvoiceManagement: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search invoice or client..."
-              className="huly-input pl-10"
+              className="huly-input huly-input-icon"
             />
           </div>
 
