@@ -7,7 +7,6 @@ export const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'CLIENT' | 'ADMIN'>('CLIENT');
   const [companyName, setCompanyName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
@@ -26,7 +25,7 @@ export const Register: React.FC = () => {
         name,
         email,
         password,
-        role,
+        role: 'CLIENT',
         companyName,
         phone,
       });
@@ -47,13 +46,13 @@ export const Register: React.FC = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center space-x-2 bg-[#111111] border border-[#4a4b50] rounded-full px-4 py-1.5 mb-4 shadow-lg">
             <Sparkles className="w-3.5 h-3.5 text-[#ff8964]" />
-            <span className="text-xs font-medium text-[#95979e]">Join PlatePixel Ecosystem</span>
+            <span className="text-xs font-medium text-[#95979e]">Client Portal Registration</span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-            Create Account
+            Create Client Account
           </h1>
           <p className="text-sm text-[#95979e]">
-            Register as an Agency Admin or Business Client
+            Register your business client account to access your digital workspace
           </p>
         </div>
 
@@ -66,41 +65,10 @@ export const Register: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Account Role Selector (2 Roles: Client & Admin) */}
-            <div>
-              <label className="block text-xs font-medium text-[#95979e] uppercase tracking-wider mb-2">
-                Account Type / Role
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole('CLIENT')}
-                  className={`py-2 px-4 rounded-lg text-xs font-medium border transition-all ${
-                    role === 'CLIENT'
-                      ? 'bg-[#5683da]/20 border-[#5683da] text-[#5683da]'
-                      : 'bg-[#090a0c] border-[#4a4b50] text-[#95979e] hover:border-[#5683da]'
-                  }`}
-                >
-                  🏢 Client Account
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('ADMIN')}
-                  className={`py-2 px-4 rounded-lg text-xs font-medium border transition-all ${
-                    role === 'ADMIN'
-                      ? 'bg-[#ff8964]/20 border-[#ff8964] text-[#ff8964]'
-                      : 'bg-[#090a0c] border-[#4a4b50] text-[#95979e] hover:border-[#ff8964]'
-                  }`}
-                >
-                  👑 Agency Admin
-                </button>
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-[#95979e] uppercase tracking-wider mb-2">
-                  Full Name
+                  Full Name *
                 </label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-3 w-4 h-4 text-[#95979e]" />
@@ -117,7 +85,7 @@ export const Register: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-medium text-[#95979e] uppercase tracking-wider mb-2">
-                  Email Address
+                  Email Address *
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-3 w-4 h-4 text-[#95979e]" />
@@ -135,7 +103,7 @@ export const Register: React.FC = () => {
 
             <div>
               <label className="block text-xs font-medium text-[#95979e] uppercase tracking-wider mb-2">
-                Password
+                Password *
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3 w-4 h-4 text-[#95979e]" />
@@ -150,41 +118,40 @@ export const Register: React.FC = () => {
               </div>
             </div>
 
-            {role === 'CLIENT' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div>
-                  <label className="block text-xs font-medium text-[#95979e] uppercase tracking-wider mb-2">
-                    Company / Business Name
-                  </label>
-                  <div className="relative">
-                    <Building className="absolute left-3.5 top-3 w-4 h-4 text-[#95979e]" />
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="Apex Lounge"
-                      className="huly-input huly-input-icon"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[#95979e] text-xs font-medium uppercase tracking-wider mb-2">
-                    Phone / Mobile
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3.5 top-3 w-4 h-4 text-[#95979e]" />
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 (555) 019-2831"
-                      className="huly-input huly-input-icon"
-                    />
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <div>
+                <label className="block text-xs font-medium text-[#95979e] uppercase tracking-wider mb-2">
+                  Company / Business Name *
+                </label>
+                <div className="relative">
+                  <Building className="absolute left-3.5 top-3 w-4 h-4 text-[#95979e]" />
+                  <input
+                    type="text"
+                    required
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="Apex Culinary Lounge"
+                    className="huly-input huly-input-icon"
+                  />
                 </div>
               </div>
-            )}
+
+              <div>
+                <label className="block text-[#95979e] text-xs font-medium uppercase tracking-wider mb-2">
+                  Phone / Mobile
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3.5 top-3 w-4 h-4 text-[#95979e]" />
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+1 (555) 019-2831"
+                    className="huly-input huly-input-icon"
+                  />
+                </div>
+              </div>
+            </div>
 
             <button
               type="submit"
@@ -195,7 +162,7 @@ export const Register: React.FC = () => {
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Create PlatePixel Account</span>
+                  <span>Create Client Portal Account</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -204,7 +171,7 @@ export const Register: React.FC = () => {
         </div>
 
         <p className="text-center text-xs text-[#95979e] mt-6">
-          Already have an account?{' '}
+          Already have a client account?{' '}
           <Link to="/login" className="text-[#5683da] hover:underline font-medium">
             Sign In
           </Link>
