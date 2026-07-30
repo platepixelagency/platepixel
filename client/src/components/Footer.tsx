@@ -52,7 +52,7 @@ export const Footer: React.FC = () => {
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-[#5683da]/10 blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-        {/* Col 1: Brand & Mission */}
+        {/* Col 1: Brand, Mission, SLA & Integrated Social Icons */}
         <div className="space-y-3">
           <Link to="/" className="flex items-center space-x-2.5 group">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#5683da] to-[#ff8964] p-0.5 flex items-center justify-center shadow-lg shadow-[#5683da]/20 group-hover:scale-110 transition-transform">
@@ -76,6 +76,37 @@ export const Footer: React.FC = () => {
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>99.9% Uptime Guarantee</span>
           </div>
+
+          {/* Social Icons Placed Directly Under Uptime Guarantee */}
+          {settings.showSocialBar && (
+            <div className="flex items-center space-x-2 pt-1.5">
+              {settings.twitterVisible && settings.twitterUrl && (
+                <a href={settings.twitterUrl} target="_blank" rel="noreferrer" className="p-1.5 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-[#5683da] transition-all" title="X (Twitter)">
+                  <Globe className="w-3.5 h-3.5 text-[#5683da]" />
+                </a>
+              )}
+              {settings.facebookVisible && settings.facebookUrl && (
+                <a href={settings.facebookUrl} target="_blank" rel="noreferrer" className="p-1.5 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-blue-500 transition-all" title="Facebook">
+                  <Facebook className="w-3.5 h-3.5 text-blue-400" />
+                </a>
+              )}
+              {settings.instagramVisible && settings.instagramUrl && (
+                <a href={settings.instagramUrl} target="_blank" rel="noreferrer" className="p-1.5 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-pink-500 transition-all" title="Instagram">
+                  <Instagram className="w-3.5 h-3.5 text-pink-400" />
+                </a>
+              )}
+              {settings.githubVisible && settings.githubUrl && (
+                <a href={settings.githubUrl} target="_blank" rel="noreferrer" className="p-1.5 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-purple-500 transition-all" title="GitHub">
+                  <Github className="w-3.5 h-3.5 text-purple-400" />
+                </a>
+              )}
+              {settings.whatsappVisible && settings.whatsappUrl && (
+                <a href={settings.whatsappUrl} target="_blank" rel="noreferrer" className="p-1.5 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-emerald-500 transition-all" title="WhatsApp Support Hotline">
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Col 2: Services */}
@@ -125,42 +156,8 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
-      {/* Social Media Links Bar (Admin Toggleable Hide/Unhide) */}
-      {settings.showSocialBar && (
-        <div className="max-w-7xl mx-auto px-6 py-4 border-t border-[#4a4b50]/30 flex items-center justify-between">
-          <span className="text-[11px] text-[#95979e] font-mono uppercase tracking-wider">Connect With PlatePixel:</span>
-          <div className="flex items-center space-x-3 text-[#95979e]">
-            {settings.twitterVisible && settings.twitterUrl && (
-              <a href={settings.twitterUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-[#5683da] transition-all" title="X (Twitter)">
-                <Globe className="w-4 h-4 text-[#5683da]" />
-              </a>
-            )}
-            {settings.facebookVisible && settings.facebookUrl && (
-              <a href={settings.facebookUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-blue-500 transition-all" title="Facebook">
-                <Facebook className="w-4 h-4 text-blue-400" />
-              </a>
-            )}
-            {settings.instagramVisible && settings.instagramUrl && (
-              <a href={settings.instagramUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-pink-500 transition-all" title="Instagram">
-                <Instagram className="w-4 h-4 text-pink-400" />
-              </a>
-            )}
-            {settings.githubVisible && settings.githubUrl && (
-              <a href={settings.githubUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-purple-500 transition-all" title="GitHub">
-                <Github className="w-4 h-4 text-purple-400" />
-              </a>
-            )}
-            {settings.whatsappVisible && settings.whatsappUrl && (
-              <a href={settings.whatsappUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-emerald-500 transition-all" title="WhatsApp Support Hotline">
-                <MessageCircle className="w-4 h-4 text-emerald-400" />
-              </a>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Sub Footer Bar */}
-      <div className="max-w-7xl mx-auto px-6 pt-4 border-t border-[#4a4b50]/30 flex flex-col md:flex-row items-center justify-between text-[11px] text-[#95979e] gap-3">
+      <div className="max-w-7xl mx-auto px-6 pt-6 border-t border-[#4a4b50]/30 flex flex-col md:flex-row items-center justify-between text-[11px] text-[#95979e] gap-3">
         <p>© {new Date().getFullYear()} PlatePixel Agency Management Platform. All rights reserved.</p>
         <div className="flex items-center space-x-5">
           <Link to="/privacy" className="hover:text-white cursor-pointer transition-colors">Privacy Policy</Link>
