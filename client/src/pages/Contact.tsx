@@ -79,12 +79,17 @@ export const Contact: React.FC = () => {
       <div className="aurora-beam" />
 
       {/* Header */}
-      <section className="pt-16 pb-12 px-6 max-w-7xl mx-auto text-center relative z-10">
-        <span className="tag-pill bg-[#5683da]/20 text-[#5683da] font-mono text-xs uppercase">Get In Touch</span>
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white mt-4 mb-4">
-          Start Your Project with <span className="text-[#5683da]">PlatePixel</span>
+      <section className="pt-20 pb-14 px-6 max-w-7xl mx-auto text-center relative z-10">
+        <div className="tag-pill-vip mb-6">
+          <Sparkles className="w-4 h-4 text-[#ff8964] animate-spin-slow" />
+          <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">Get In Touch With Us</span>
+        </div>
+
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white mt-3 mb-6 leading-tight">
+          Start Your Project with <span className="text-vip-shimmer">PlatePixel</span>
         </h1>
-        <p className="text-base text-[#95979e] max-w-2xl mx-auto">
+
+        <p className="text-base sm:text-lg text-[#95979e] max-w-2xl mx-auto leading-relaxed">
           Fill out the lead intake form below to receive a custom proposal and website timeline within 24 hours.
         </p>
       </section>

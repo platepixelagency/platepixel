@@ -18,7 +18,8 @@ import {
   Calendar, 
   Boxes,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 import { Footer } from '../components/Footer';
 
@@ -28,12 +29,17 @@ export const Services: React.FC = () => {
       {/* Background Glow */}
       <div className="aurora-beam" />
 
-      <section className="pt-16 pb-12 px-6 max-w-7xl mx-auto text-center relative z-10">
-        <span className="tag-pill bg-[#5683da]/20 text-[#5683da] font-mono text-xs uppercase">Comprehensive Services</span>
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white mt-4 mb-4">
-          Tailored Web Solutions for <span className="text-[#5683da]">Local Businesses</span> & <span className="text-[#ff8964]">Enterprises</span>
+      <section className="pt-20 pb-14 px-6 max-w-7xl mx-auto text-center relative z-10">
+        <div className="tag-pill-vip mb-6">
+          <Sparkles className="w-4 h-4 text-[#ff8964] animate-spin-slow" />
+          <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">Comprehensive Services</span>
+        </div>
+        
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white mt-3 mb-6 leading-tight">
+          Tailored Web Solutions for <span className="text-vip-shimmer">Local Businesses</span> & <span className="bg-gradient-to-r from-[#ff8964] via-amber-300 to-[#ff8964] bg-clip-text text-transparent">Enterprises</span>
         </h1>
-        <p className="text-base text-[#95979e] max-w-2xl mx-auto">
+        
+        <p className="text-base sm:text-lg text-[#95979e] max-w-2xl mx-auto leading-relaxed">
           Choose from our starter site builds, recurring monthly growth retainers, or full-scale custom web application development.
         </p>
       </section>
