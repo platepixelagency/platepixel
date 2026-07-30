@@ -14,7 +14,16 @@ import {
   RefreshCw,
   Star,
   Globe,
-  Tag
+  Tag,
+  Eye,
+  EyeOff,
+  Settings,
+  Mail,
+  Phone,
+  Facebook,
+  Instagram,
+  Github,
+  MessageCircle
 } from 'lucide-react';
 
 export const CatalogManagement: React.FC = () => {
@@ -25,6 +34,25 @@ export const CatalogManagement: React.FC = () => {
   const [pricing, setPricing] = useState<any[]>([]);
   const [portfolio, setPortfolio] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Site Contact & Social Media Settings State
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [siteSettingsForm, setSiteSettingsForm] = useState({
+    supportEmail: 'support@platepixel.com',
+    supportPhone: '+1 (555) 019-2831',
+    officeLocation: 'San Francisco & Remote Worldwide',
+    twitterUrl: 'https://x.com/platepixel',
+    twitterVisible: true,
+    facebookUrl: 'https://facebook.com/platepixel',
+    facebookVisible: true,
+    instagramUrl: 'https://instagram.com/platepixel',
+    instagramVisible: true,
+    githubUrl: 'https://github.com/platepixelagency',
+    githubVisible: true,
+    whatsappUrl: 'https://wa.me/15550192831',
+    whatsappVisible: true,
+    showSocialBar: true,
+  });
 
   // Modals state
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -69,20 +97,39 @@ export const CatalogManagement: React.FC = () => {
   const loadCatalogData = async () => {
     try {
       setLoading(true);
-      const [servRes, priceRes, portRes, heroRes] = await Promise.all([
+      const [servRes, priceRes, portRes, heroRes, settingsRes] = await Promise.all([
         fetch('/api/catalog/services').then((r) => r.json()),
         fetch('/api/catalog/pricing').then((r) => r.json()),
         fetch('/api/catalog/portfolio').then((r) => r.json()),
         fetch('/api/catalog/hero-stats').then((r) => r.json()),
+        fetch('/api/catalog/site-settings').then((r) => r.json()),
       ]);
       setServices(servRes.services || []);
       setPricing(priceRes.pricing || []);
       setPortfolio(portRes.portfolio || []);
       if (heroRes.stats) setHeroForm(heroRes.stats);
+      if (settingsRes?.settings) setSiteSettingsForm(settingsRes.settings);
     } catch (err) {
       console.error('Failed to load catalog data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveSiteSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await fetchWithAuth('/catalog/site-settings', {
+        method: 'POST',
+        body: JSON.stringify(siteSettingsForm),
+      });
+      alert('Support contact details & social media settings updated successfully!');
+      setShowSettingsModal(false);
+    } catch (err: any) {
+      alert(err.message || 'Failed to update site settings');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -244,6 +291,14 @@ export const CatalogManagement: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="btn-pill-secondary text-xs py-2 px-3 flex items-center space-x-1.5 border-purple-500/40 text-purple-400"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>Support & Social Media Links</span>
+          </button>
+
           <button
             onClick={() => setShowHeroModal(true)}
             className="btn-pill-secondary text-xs py-2 px-3 flex items-center space-x-1.5 border-[#5683da]/40 text-[#5683da]"
@@ -761,6 +816,205 @@ export const CatalogManagement: React.FC = () => {
 
               <button type="submit" disabled={submitting} className="btn-pill-primary w-full py-3 text-xs mt-2">
                 {submitting ? 'Saving Live Preview Changes...' : 'Save Live Preview Changes'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CLIENT SUPPORT & SOCIAL MEDIA CONTROLS */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="huly-card max-w-xl w-full p-6 md:p-8 space-y-5 relative max-h-[90vh] overflow-y-auto border-purple-500/50">
+            <button onClick={() => setShowSettingsModal(false)} className="absolute top-4 right-4 text-[#95979e] hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div>
+              <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                <Settings className="w-5 h-5 text-purple-400" />
+                <span>Client Support & Social Media Manager</span>
+              </h3>
+              <p className="text-xs text-[#95979e]">Edit support hotline, contact email, and toggle social media icon visibility on the website footer.</p>
+            </div>
+
+            <form onSubmit={handleSaveSiteSettings} className="space-y-4 text-xs">
+              {/* SECTION 1: CLIENT SUPPORT CONTACT DETAILS */}
+              <div className="p-4 bg-[#090a0c] border border-[#4a4b50]/50 rounded-xl space-y-3">
+                <h4 className="font-mono text-white text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                  <Mail className="w-4 h-4 text-[#5683da]" />
+                  <span>Client Support Contact Information</span>
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#95979e] mb-1">Support Email Address *</label>
+                    <input
+                      type="email"
+                      required
+                      value={siteSettingsForm.supportEmail}
+                      onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, supportEmail: e.target.value })}
+                      placeholder="support@platepixel.com"
+                      className="huly-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#95979e] mb-1">Support Phone / Hotline *</label>
+                    <input
+                      type="text"
+                      required
+                      value={siteSettingsForm.supportPhone}
+                      onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, supportPhone: e.target.value })}
+                      placeholder="+1 (555) 019-2831"
+                      className="huly-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: SOCIAL MEDIA LINKS & EYE HIDE/UNHIDE TOGGLES */}
+              <div className="p-4 bg-[#090a0c] border border-[#4a4b50]/50 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-mono text-white text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                    <Globe className="w-4 h-4 text-[#ff8964]" />
+                    <span>Footer Social Media Icons & Visibility Toggles</span>
+                  </h4>
+
+                  <button
+                    type="button"
+                    onClick={() => setSiteSettingsForm({ ...siteSettingsForm, showSocialBar: !siteSettingsForm.showSocialBar })}
+                    className={`px-3 py-1 rounded-full text-[11px] font-mono flex items-center space-x-1 border transition-all ${
+                      siteSettingsForm.showSocialBar
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                        : 'bg-red-500/20 text-red-400 border-red-500/40'
+                    }`}
+                  >
+                    {siteSettingsForm.showSocialBar ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    <span>{siteSettingsForm.showSocialBar ? 'Social Bar Visible' : 'Social Bar Hidden'}</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3 pt-1">
+                  {/* Twitter / X */}
+                  <div className="flex items-center space-x-2">
+                    <div className="w-24 text-[11px] font-mono text-white flex items-center space-x-1">
+                      <Globe className="w-3.5 h-3.5 text-[#5683da]" />
+                      <span>X / Twitter</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={siteSettingsForm.twitterUrl}
+                      onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, twitterUrl: e.target.value })}
+                      placeholder="https://x.com/platepixel"
+                      className="huly-input flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSiteSettingsForm({ ...siteSettingsForm, twitterVisible: !siteSettingsForm.twitterVisible })}
+                      className={`p-2 rounded-lg border ${siteSettingsForm.twitterVisible ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
+                      title={siteSettingsForm.twitterVisible ? 'Visible on Footer' : 'Hidden from Footer'}
+                    >
+                      {siteSettingsForm.twitterVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* Facebook */}
+                  <div className="flex items-center space-x-2">
+                    <div className="w-24 text-[11px] font-mono text-white flex items-center space-x-1">
+                      <Facebook className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Facebook</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={siteSettingsForm.facebookUrl}
+                      onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, facebookUrl: e.target.value })}
+                      placeholder="https://facebook.com/platepixel"
+                      className="huly-input flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSiteSettingsForm({ ...siteSettingsForm, facebookVisible: !siteSettingsForm.facebookVisible })}
+                      className={`p-2 rounded-lg border ${siteSettingsForm.facebookVisible ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
+                      title={siteSettingsForm.facebookVisible ? 'Visible on Footer' : 'Hidden from Footer'}
+                    >
+                      {siteSettingsForm.facebookVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* Instagram */}
+                  <div className="flex items-center space-x-2">
+                    <div className="w-24 text-[11px] font-mono text-white flex items-center space-x-1">
+                      <Instagram className="w-3.5 h-3.5 text-pink-400" />
+                      <span>Instagram</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={siteSettingsForm.instagramUrl}
+                      onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, instagramUrl: e.target.value })}
+                      placeholder="https://instagram.com/platepixel"
+                      className="huly-input flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSiteSettingsForm({ ...siteSettingsForm, instagramVisible: !siteSettingsForm.instagramVisible })}
+                      className={`p-2 rounded-lg border ${siteSettingsForm.instagramVisible ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
+                      title={siteSettingsForm.instagramVisible ? 'Visible on Footer' : 'Hidden from Footer'}
+                    >
+                      {siteSettingsForm.instagramVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* GitHub */}
+                  <div className="flex items-center space-x-2">
+                    <div className="w-24 text-[11px] font-mono text-white flex items-center space-x-1">
+                      <Github className="w-3.5 h-3.5 text-purple-400" />
+                      <span>GitHub</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={siteSettingsForm.githubUrl}
+                      onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, githubUrl: e.target.value })}
+                      placeholder="https://github.com/platepixelagency"
+                      className="huly-input flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSiteSettingsForm({ ...siteSettingsForm, githubVisible: !siteSettingsForm.githubVisible })}
+                      className={`p-2 rounded-lg border ${siteSettingsForm.githubVisible ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
+                      title={siteSettingsForm.githubVisible ? 'Visible on Footer' : 'Hidden from Footer'}
+                    >
+                      {siteSettingsForm.githubVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* WhatsApp */}
+                  <div className="flex items-center space-x-2">
+                    <div className="w-24 text-[11px] font-mono text-white flex items-center space-x-1">
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>WhatsApp</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={siteSettingsForm.whatsappUrl}
+                      onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, whatsappUrl: e.target.value })}
+                      placeholder="https://wa.me/15550192831"
+                      className="huly-input flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSiteSettingsForm({ ...siteSettingsForm, whatsappVisible: !siteSettingsForm.whatsappVisible })}
+                      className={`p-2 rounded-lg border ${siteSettingsForm.whatsappVisible ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
+                      title={siteSettingsForm.whatsappVisible ? 'Visible on Footer' : 'Hidden from Footer'}
+                    >
+                      {siteSettingsForm.whatsappVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" disabled={submitting} className="btn-pill-primary w-full py-3 text-xs bg-purple-500 hover:bg-purple-600 border-none text-white font-bold mt-2">
+                {submitting ? 'Saving Site Settings...' : 'Save Support Contact & Social Media Controls'}
               </button>
             </form>
           </div>

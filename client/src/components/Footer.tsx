@@ -1,8 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ShieldCheck, Mail, Phone, ArrowRight } from 'lucide-react';
+import { Sparkles, ShieldCheck, Mail, Phone, ArrowRight, Globe, Facebook, Instagram, Github, MessageCircle } from 'lucide-react';
+
+interface SiteSettings {
+  supportEmail: string;
+  supportPhone: string;
+  officeLocation: string;
+  twitterUrl: string;
+  twitterVisible: boolean;
+  facebookUrl: string;
+  facebookVisible: boolean;
+  instagramUrl: string;
+  instagramVisible: boolean;
+  githubUrl: string;
+  githubVisible: boolean;
+  whatsappUrl: string;
+  whatsappVisible: boolean;
+  showSocialBar: boolean;
+}
 
 export const Footer: React.FC = () => {
+  const [settings, setSettings] = useState<SiteSettings>({
+    supportEmail: 'support@platepixel.com',
+    supportPhone: '+1 (555) 019-2831',
+    officeLocation: 'San Francisco & Remote Worldwide',
+    twitterUrl: 'https://x.com/platepixel',
+    twitterVisible: true,
+    facebookUrl: 'https://facebook.com/platepixel',
+    facebookVisible: true,
+    instagramUrl: 'https://instagram.com/platepixel',
+    instagramVisible: true,
+    githubUrl: 'https://github.com/platepixelagency',
+    githubVisible: true,
+    whatsappUrl: 'https://wa.me/15550192831',
+    whatsappVisible: true,
+    showSocialBar: true,
+  });
+
+  useEffect(() => {
+    fetch('/api/catalog/site-settings')
+      .then((r) => r.json())
+      .then((res: any) => {
+        if (res?.settings) setSettings(res.settings);
+      })
+      .catch((err: any) => console.log('Site settings default fallbacks active:', err));
+  }, []);
+
   return (
     <footer className="bg-[#090a0c] border-t border-[#4a4b50]/40 pt-10 pb-8 text-[#95979e] text-xs relative overflow-hidden transition-all hover:border-[#5683da]/40">
       {/* Background Accent Glow */}
@@ -64,11 +107,11 @@ export const Footer: React.FC = () => {
           <div className="space-y-2 text-xs">
             <div className="flex items-center space-x-2">
               <Mail className="w-3.5 h-3.5 text-[#5683da]" />
-              <span>support@platepixel.com</span>
+              <a href={`mailto:${settings.supportEmail}`} className="hover:text-white transition-colors">{settings.supportEmail}</a>
             </div>
             <div className="flex items-center space-x-2">
               <Phone className="w-3.5 h-3.5 text-[#ff8964]" />
-              <span>+1 (555) 019-2831</span>
+              <a href={`tel:${settings.supportPhone}`} className="hover:text-white transition-colors">{settings.supportPhone}</a>
             </div>
           </div>
 
@@ -82,8 +125,42 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
+      {/* Social Media Links Bar (Admin Toggleable Hide/Unhide) */}
+      {settings.showSocialBar && (
+        <div className="max-w-7xl mx-auto px-6 py-4 border-t border-[#4a4b50]/30 flex items-center justify-between">
+          <span className="text-[11px] text-[#95979e] font-mono uppercase tracking-wider">Connect With PlatePixel:</span>
+          <div className="flex items-center space-x-3 text-[#95979e]">
+            {settings.twitterVisible && settings.twitterUrl && (
+              <a href={settings.twitterUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-[#5683da] transition-all" title="X (Twitter)">
+                <Globe className="w-4 h-4 text-[#5683da]" />
+              </a>
+            )}
+            {settings.facebookVisible && settings.facebookUrl && (
+              <a href={settings.facebookUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-blue-500 transition-all" title="Facebook">
+                <Facebook className="w-4 h-4 text-blue-400" />
+              </a>
+            )}
+            {settings.instagramVisible && settings.instagramUrl && (
+              <a href={settings.instagramUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-pink-500 transition-all" title="Instagram">
+                <Instagram className="w-4 h-4 text-pink-400" />
+              </a>
+            )}
+            {settings.githubVisible && settings.githubUrl && (
+              <a href={settings.githubUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-purple-500 transition-all" title="GitHub">
+                <Github className="w-4 h-4 text-purple-400" />
+              </a>
+            )}
+            {settings.whatsappVisible && settings.whatsappUrl && (
+              <a href={settings.whatsappUrl} target="_blank" rel="noreferrer" className="p-2 bg-[#111111] border border-[#4a4b50]/50 rounded-lg hover:text-white hover:border-emerald-500 transition-all" title="WhatsApp Support Hotline">
+                <MessageCircle className="w-4 h-4 text-emerald-400" />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Sub Footer Bar */}
-      <div className="max-w-7xl mx-auto px-6 pt-6 border-t border-[#4a4b50]/30 flex flex-col md:flex-row items-center justify-between text-[11px] text-[#95979e] gap-3">
+      <div className="max-w-7xl mx-auto px-6 pt-4 border-t border-[#4a4b50]/30 flex flex-col md:flex-row items-center justify-between text-[11px] text-[#95979e] gap-3">
         <p>© {new Date().getFullYear()} PlatePixel Agency Management Platform. All rights reserved.</p>
         <div className="flex items-center space-x-5">
           <Link to="/privacy" className="hover:text-white cursor-pointer transition-colors">Privacy Policy</Link>

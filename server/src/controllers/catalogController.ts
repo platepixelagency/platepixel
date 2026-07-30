@@ -25,6 +25,61 @@ export const updateHeroStats = async (req: Request, res: Response): Promise<void
   }
 };
 
+// In-memory / dynamic Site Contact & Social Media Settings state
+export let currentSiteSettings = {
+  supportEmail: 'support@platepixel.com',
+  supportPhone: '+1 (555) 019-2831',
+  officeLocation: 'San Francisco & Remote Worldwide',
+  twitterUrl: 'https://x.com/platepixel',
+  twitterVisible: true,
+  facebookUrl: 'https://facebook.com/platepixel',
+  facebookVisible: true,
+  instagramUrl: 'https://instagram.com/platepixel',
+  instagramVisible: true,
+  githubUrl: 'https://github.com/platepixelagency',
+  githubVisible: true,
+  whatsappUrl: 'https://wa.me/15550192831',
+  whatsappVisible: true,
+  showSocialBar: true,
+};
+
+export const getSiteSettings = async (_req: Request, res: Response): Promise<void> => {
+  res.status(200).json({ settings: currentSiteSettings });
+};
+
+export const updateSiteSettings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const {
+      supportEmail, supportPhone, officeLocation,
+      twitterUrl, twitterVisible,
+      facebookUrl, facebookVisible,
+      instagramUrl, instagramVisible,
+      githubUrl, githubVisible,
+      whatsappUrl, whatsappVisible,
+      showSocialBar,
+    } = req.body;
+
+    if (supportEmail !== undefined) currentSiteSettings.supportEmail = supportEmail;
+    if (supportPhone !== undefined) currentSiteSettings.supportPhone = supportPhone;
+    if (officeLocation !== undefined) currentSiteSettings.officeLocation = officeLocation;
+    if (twitterUrl !== undefined) currentSiteSettings.twitterUrl = twitterUrl;
+    if (twitterVisible !== undefined) currentSiteSettings.twitterVisible = twitterVisible;
+    if (facebookUrl !== undefined) currentSiteSettings.facebookUrl = facebookUrl;
+    if (facebookVisible !== undefined) currentSiteSettings.facebookVisible = facebookVisible;
+    if (instagramUrl !== undefined) currentSiteSettings.instagramUrl = instagramUrl;
+    if (instagramVisible !== undefined) currentSiteSettings.instagramVisible = instagramVisible;
+    if (githubUrl !== undefined) currentSiteSettings.githubUrl = githubUrl;
+    if (githubVisible !== undefined) currentSiteSettings.githubVisible = githubVisible;
+    if (whatsappUrl !== undefined) currentSiteSettings.whatsappUrl = whatsappUrl;
+    if (whatsappVisible !== undefined) currentSiteSettings.whatsappVisible = whatsappVisible;
+    if (showSocialBar !== undefined) currentSiteSettings.showSocialBar = showSocialBar;
+
+    res.status(200).json({ message: 'Site contact & social settings updated successfully', settings: currentSiteSettings });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to update site settings' });
+  }
+};
+
 // Default Seed Data
 const DEFAULT_SERVICES = [
   {
