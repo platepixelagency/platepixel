@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface CountUpProps {
   value: string;
@@ -7,8 +7,31 @@ interface CountUpProps {
 
 export const CountUpNumber: React.FC<CountUpProps> = ({ value, className = '' }) => {
   const [displayValue, setDisplayValue] = useState<string>('0');
+  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const elementRef = useRef<HTMLSpanElement | null>(null);
+
+  // Scroll Trigger: Only start counting when section scrolls into viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (elementRef.current) observer.unobserve(elementRef.current);
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
+    if (!isVisible) return;
+
     // Extract numbers and non-numeric suffixes (e.g. "100+" -> 100, "+"; "99.9%" -> 99.9, "%")
     const numericMatch = value.match(/[\d.]+/);
     if (!numericMatch) {
@@ -47,7 +70,7 @@ export const CountUpNumber: React.FC<CountUpProps> = ({ value, className = '' })
     };
 
     requestAnimationFrame(animateCount);
-  }, [value]);
+  }, [value, isVisible]);
 
-  return <span className={className}>{displayValue}</span>;
+  return <span ref={elementRef} className={className}>{displayValue}</span>;
 };
