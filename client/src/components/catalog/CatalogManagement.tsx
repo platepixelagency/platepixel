@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchWithAuth } from '../../services/api';
+import { OrbLoader } from '../OrbLoader';
 import { 
   Sparkles, 
   Plus, 
@@ -308,7 +309,11 @@ export const CatalogManagement: React.FC = () => {
         </button>
       </div>
 
-      {/* SUB-TAB 1: SERVICES MANAGER */}
+      {loading ? (
+        <OrbLoader label="Loading Catalog Engine..." size="md" />
+      ) : (
+        <>
+          {/* SUB-TAB 1: SERVICES MANAGER */}
       {activeSubTab === 'services' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {services.map((s) => (
@@ -448,6 +453,8 @@ export const CatalogManagement: React.FC = () => {
             </div>
           ))}
         </div>
+      )}
+      </>
       )}
 
       {/* ADD / EDIT MODAL */}

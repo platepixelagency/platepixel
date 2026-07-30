@@ -17,13 +17,13 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-[#090a0c]/85 border-b border-[#4a4b50]/40 px-6 py-3.5 transition-all">
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#090a0c]/90 border-b border-[#4a4b50]/40 px-6 py-3.5 transition-all animate-navbar-slide-down">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center space-x-3 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#5683da] to-[#ff8964] p-0.5 flex items-center justify-center shadow-lg shadow-[#5683da]/20 group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#5683da] to-[#ff8964] p-0.5 flex items-center justify-center shadow-lg shadow-[#5683da]/20 group-hover:scale-110 transition-transform duration-300">
             <div className="w-full h-full bg-[#090a0c] rounded-[10px] flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-[#ff8964]" />
+              <Sparkles className="w-4 h-4 text-[#ff8964] group-hover:rotate-12 transition-transform" />
             </div>
           </div>
           <div>
@@ -36,42 +36,26 @@ export const Navbar: React.FC = () => {
 
         {/* Center Navigation Links */}
         <nav className="hidden lg:flex items-center space-x-8 text-sm text-[#95979e]">
-          <Link
-            to="/"
-            className={`transition-colors hover:text-white ${isActive('/') ? 'text-white font-semibold' : ''}`}
-          >
-            Home
-          </Link>
-          <Link
-            to="/services"
-            className={`transition-colors hover:text-white ${isActive('/services') ? 'text-white font-semibold' : ''}`}
-          >
-            Services
-          </Link>
-          <Link
-            to="/pricing"
-            className={`transition-colors hover:text-white ${isActive('/pricing') ? 'text-white font-semibold' : ''}`}
-          >
-            Pricing
-          </Link>
-          <Link
-            to="/portfolio"
-            className={`transition-colors hover:text-white ${isActive('/portfolio') ? 'text-white font-semibold' : ''}`}
-          >
-            Portfolio
-          </Link>
-          <Link
-            to="/about"
-            className={`transition-colors hover:text-white ${isActive('/about') ? 'text-white font-semibold' : ''}`}
-          >
-            About
-          </Link>
-          <Link
-            to="/contact"
-            className={`transition-colors hover:text-white ${isActive('/contact') ? 'text-white font-semibold' : ''}`}
-          >
-            Contact
-          </Link>
+          {[
+            { path: '/', label: 'Home' },
+            { path: '/services', label: 'Services' },
+            { path: '/pricing', label: 'Pricing' },
+            { path: '/portfolio', label: 'Portfolio' },
+            { path: '/about', label: 'About' },
+            { path: '/contact', label: 'Contact' },
+          ].map(item => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`relative py-1 transition-all hover:text-white ${
+                isActive(item.path)
+                  ? 'text-white font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-gradient-to-r after:from-[#5683da] after:to-[#ff8964] after:rounded-full'
+                  : ''
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         {/* Right Auth / Action Controls */}

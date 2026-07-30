@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchWithAuth } from '../../services/api';
+import { OrbLoader } from '../OrbLoader';
 import { 
   Building, 
   Briefcase, 
@@ -121,12 +122,7 @@ export const ClientPortal: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="py-20 text-center space-y-3">
-        <div className="w-10 h-10 border-4 border-[#5683da] border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p className="text-xs text-[#95979e]">Loading your Client Workspace...</p>
-      </div>
-    );
+    return <OrbLoader label="Loading your Client Workspace..." size="lg" />;
   }
 
   if (!data) {
