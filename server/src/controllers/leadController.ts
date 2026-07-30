@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../prisma.js';
 import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
 
@@ -77,5 +78,90 @@ export const updateLeadStatus = async (req: AuthenticatedRequest, res: Response)
   } catch (error: any) {
     console.error('Error updating lead status:', error);
     res.status(500).json({ error: 'Failed to update lead status' });
+  }
+};
+
+// Protected API: 1-Click Lead-to-Client Conversion
+export const convertLeadToClient = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const leadId = Array.isArray(id) ? id[0] : id;
+
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    // Check if user account with lead email already exists
+    let user = await prisma.user.findUnique({
+      where: { email: lead.email },
+      include: { client: true },
+    });
+
+    let defaultPassword = '';
+
+    if (!user) {
+      // Create new client user account
+      defaultPassword = `PlatePixel@${Math.floor(1000 + Math.random() * 9000)}`;
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+      user = await prisma.user.create({
+        data: {
+          name: lead.name,
+          email: lead.email,
+          password: hashedPassword,
+          role: 'CLIENT',
+        },
+        include: { client: true },
+      });
+    }
+
+    // Check if Client profile exists for user
+    let client = user.client;
+    if (!client) {
+      client = await prisma.client.create({
+        data: {
+          userId: user.id,
+          companyName: lead.businessName,
+          phone: lead.mobile,
+          address: 'Default Office Location',
+          renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 Year Renewal
+        },
+      });
+    }
+
+    // Update lead status to WON
+    const updatedLead = await prisma.lead.update({
+      where: { id: leadId },
+      data: { status: 'WON' },
+    });
+
+    res.status(200).json({
+      message: 'Lead converted to Client successfully!',
+      lead: updatedLead,
+      client,
+      userCredentials: {
+        email: user.email,
+        temporaryPassword: defaultPassword || 'Account already exists (Password unchanged)',
+      },
+    });
+  } catch (error: any) {
+    console.error('Error converting lead:', error);
+    res.status(500).json({ error: 'Failed to convert lead to client' });
+  }
+};
+
+// Protected API: Delete Lead
+export const deleteLead = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const leadId = Array.isArray(id) ? id[0] : id;
+
+    await prisma.lead.delete({ where: { id: leadId } });
+    res.status(200).json({ message: 'Lead deleted successfully' });
+  } catch (error: any) {
+    console.error('Error deleting lead:', error);
+    res.status(500).json({ error: 'Failed to delete lead' });
   }
 };
