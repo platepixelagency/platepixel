@@ -21,7 +21,7 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center space-x-3 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#5683da] to-[#ff8964] p-0.5 flex items-center justify-center shadow-lg shadow-[#5683da]/20 group-hover:scale-110 transition-transform duration-300">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#5683da] via-[#ff8964] to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-[#5683da]/20 group-hover:scale-110 transition-transform duration-300">
             <div className="w-full h-full bg-[#090a0c] rounded-[10px] flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-[#ff8964] group-hover:rotate-12 transition-transform" />
             </div>
@@ -30,7 +30,7 @@ export const Navbar: React.FC = () => {
             <span className="font-bold text-lg tracking-tight text-white group-hover:text-[#5683da] transition-colors">
               Plate<span className="text-[#ff8964]">Pixel</span>
             </span>
-            <span className="block text-[10px] text-[#95979e] uppercase tracking-wider font-mono">Agency Platform</span>
+            <span className="block text-[10px] text-[#95979e] uppercase tracking-wider font-mono">AGENCY PLATFORM</span>
           </div>
         </Link>
 

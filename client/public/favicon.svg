@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5683da" />
+      <stop offset="50%" stop-color="#ff8964" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111520" />
+      <stop offset="100%" stop-color="#090a0c" />
+    </linearGradient>
+    <filter id="shadowGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Square Container -->
+  <rect x="8" y="8" width="84" height="84" rx="24" fill="url(#bgGrad)" stroke="url(#glowGrad)" stroke-width="4" filter="url(#shadowGlow)" />
+
+  <!-- Sparkling Star Center (PlatePixel Signature Icon) -->
+  <path d="M50 25 C50 38 62 50 75 50 C62 50 50 62 50 75 C50 62 38 50 25 50 C38 50 50 38 50 25 Z" fill="#ff8964" />
+  <circle cx="34" cy="34" r="3.5" fill="#5683da" />
+  <circle cx="66" cy="66" r="3" fill="#10b981" />
+</svg>
