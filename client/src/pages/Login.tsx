@@ -91,7 +91,7 @@ export const Login: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@agency.com"
-                  className="huly-input pl-10"
+                  className="huly-input huly-input-icon"
                 />
               </div>
             </div>
@@ -110,7 +110,7 @@ export const Login: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="huly-input pl-10"
+                  className="huly-input huly-input-icon"
                 />
               </div>
             </div>

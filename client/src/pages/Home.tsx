@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -21,6 +21,20 @@ import {
 import { Footer } from '../components/Footer';
 
 export const Home: React.FC = () => {
+  const [heroStats, setHeroStats] = useState({
+    clientProjects: '24 Active',
+    leadCrmWon: '$48,500',
+    maintenanceRenewals: '98% On Time',
+  });
+
+  useEffect(() => {
+    fetch('/api/catalog/hero-stats')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.stats) setHeroStats(data.stats);
+      })
+      .catch((err) => console.error('Failed to load hero stats:', err));
+  }, []);
   return (
     <div className="bg-[#090a0c] text-white min-h-screen relative overflow-hidden">
       
@@ -76,7 +90,7 @@ export const Home: React.FC = () => {
               <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                 <div className="bg-[#111111] p-5 rounded-xl border border-[#4a4b50]/50 space-y-2">
                   <div className="text-xs text-[#95979e] uppercase font-mono">Client Projects</div>
-                  <div className="text-2xl font-bold text-white">24 Active</div>
+                  <div className="text-2xl font-bold text-white">{heroStats.clientProjects}</div>
                   <div className="w-full bg-[#090a0c] h-1.5 rounded-full overflow-hidden">
                     <div className="bg-[#5683da] h-full w-[80%]"></div>
                   </div>
@@ -84,7 +98,7 @@ export const Home: React.FC = () => {
 
                 <div className="bg-[#111111] p-5 rounded-xl border border-[#4a4b50]/50 space-y-2">
                   <div className="text-xs text-[#95979e] uppercase font-mono">Lead CRM Won</div>
-                  <div className="text-2xl font-bold text-[#ff8964]">$48,500</div>
+                  <div className="text-2xl font-bold text-[#ff8964]">{heroStats.leadCrmWon}</div>
                   <div className="w-full bg-[#090a0c] h-1.5 rounded-full overflow-hidden">
                     <div className="bg-[#ff8964] h-full w-[65%]"></div>
                   </div>
@@ -92,7 +106,7 @@ export const Home: React.FC = () => {
 
                 <div className="bg-[#111111] p-5 rounded-xl border border-[#4a4b50]/50 space-y-2">
                   <div className="text-xs text-[#95979e] uppercase font-mono">Maintenance Renewals</div>
-                  <div className="text-2xl font-bold text-emerald-400">98% On Time</div>
+                  <div className="text-2xl font-bold text-emerald-400">{heroStats.maintenanceRenewals}</div>
                   <div className="w-full bg-[#090a0c] h-1.5 rounded-full overflow-hidden">
                     <div className="bg-emerald-400 h-full w-[98%]"></div>
                   </div>

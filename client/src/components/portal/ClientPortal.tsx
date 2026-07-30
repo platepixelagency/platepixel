@@ -55,6 +55,35 @@ export const ClientPortal: React.FC = () => {
   const [newDoc, setNewDoc] = useState({ fileName: '', fileUrl: '' });
   const [uploading, setUploading] = useState<boolean>(false);
 
+  // Ticket creation state for clients
+  const [showTicketModal, setShowTicketModal] = useState<boolean>(false);
+  const [newTicket, setNewTicket] = useState({ subject: '', message: '' });
+  const [submittingTicket, setSubmittingTicket] = useState<boolean>(false);
+
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingTicket(true);
+
+    try {
+      await fetchWithAuth('/tickets', {
+        method: 'POST',
+        body: JSON.stringify({
+          clientId: data?.client.id,
+          subject: newTicket.subject,
+          message: newTicket.message,
+        }),
+      });
+
+      setShowTicketModal(false);
+      setNewTicket({ subject: '', message: '' });
+      loadPortalData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to submit support ticket');
+    } finally {
+      setSubmittingTicket(false);
+    }
+  };
+
   const loadPortalData = async () => {
     try {
       setLoading(true);
@@ -447,21 +476,14 @@ export const ClientPortal: React.FC = () => {
           <div className="flex justify-between items-center bg-[#111111] p-6 rounded-2xl border border-[#4a4b50]">
             <div>
               <h3 className="text-xl font-bold text-white">Project Documents & Assets</h3>
-              <p className="text-xs text-[#95979e]">Download contract agreements, website spec PDFs, and design assets.</p>
+              <p className="text-xs text-[#95979e]">Download contract agreements, website spec PDFs, and design assets uploaded by your agency manager.</p>
             </div>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="btn-pill-primary text-xs py-2 px-4 flex items-center space-x-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Upload Document</span>
-            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {client.documents.length === 0 ? (
               <div className="col-span-3 huly-card p-12 text-center text-[#95979e]">
-                No documents uploaded yet.
+                No project documents uploaded by agency yet.
               </div>
             ) : (
               client.documents.map(doc => (
@@ -479,11 +501,12 @@ export const ClientPortal: React.FC = () => {
                   <a
                     href={doc.fileUrl}
                     target="_blank"
+                    download
                     rel="noreferrer"
                     className="btn-pill-secondary w-full py-2 text-xs text-center flex items-center justify-center space-x-1.5 text-[#5683da]"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download File</span>
+                    <span>Download File / PDF</span>
                   </a>
                 </div>
               ))
@@ -492,28 +515,35 @@ export const ClientPortal: React.FC = () => {
         </div>
       )}
 
-      {/* Tab: Support Tickets (Phase 8 Preview Integration) */}
+      {/* Tab: Support Tickets */}
       {activeTab === 'tickets' && (
-        <div className="huly-card p-8 space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold text-white">Support & Service Tickets</h3>
-            <span className="tag-pill bg-amber-500/20 text-amber-400 text-xs">Phase 8 Ticket Engine Ready</span>
+        <div className="huly-card p-8 space-y-6">
+          <div className="flex justify-between items-center border-b border-[#4a4b50]/40 pb-4">
+            <div>
+              <h3 className="text-xl font-bold text-white">Support & Service Tickets</h3>
+              <p className="text-xs text-[#95979e]">Submit support requests for content edits, technical updates, or domain assistance.</p>
+            </div>
+            <button
+              onClick={() => setShowTicketModal(true)}
+              className="btn-pill-primary text-xs py-2 px-4 flex items-center space-x-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Open Support Ticket</span>
+            </button>
           </div>
-          <p className="text-xs text-[#95979e]">
-            Submit support requests for content edits, technical updates, or domain configuration assistance.
-          </p>
 
           <div className="space-y-3 pt-2">
             {client.tickets.length === 0 ? (
               <div className="p-8 bg-[#090a0c] rounded-xl text-xs text-[#95979e] text-center border border-[#4a4b50]/30">
-                No support tickets opened.
+                No support tickets opened yet. Click &quot;Open Support Ticket&quot; above to submit an inquiry.
               </div>
             ) : (
               client.tickets.map(t => (
                 <div key={t.id} className="p-4 bg-[#090a0c] rounded-xl border border-[#4a4b50]/40 flex justify-between items-center text-xs">
                   <div>
                     <span className="font-bold text-white block">{t.subject}</span>
-                    <span className="text-[#95979e] text-[11px]">{t.message}</span>
+                    <span className="text-[#95979e] text-[11px] block mt-0.5">{t.message}</span>
+                    <span className="text-[10px] text-[#95979e] font-mono mt-1 block">{new Date(t.createdAt).toLocaleDateString()}</span>
                   </div>
                   <span className="tag-pill bg-[#5683da]/20 text-[#5683da]">{t.status}</span>
                 </div>
@@ -603,6 +633,54 @@ export const ClientPortal: React.FC = () => {
                 className="btn-pill-primary w-full py-2.5 text-xs mt-2"
               >
                 {uploading ? 'Uploading...' : 'Save Document to Workspace'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Open Support Ticket Modal */}
+      {showTicketModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="huly-card max-w-md w-full p-6 space-y-4 relative border-[#5683da]/50">
+            <button onClick={() => setShowTicketModal(false)} className="absolute top-4 right-4 text-[#95979e] hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-bold text-white">Open Support Ticket</h3>
+            <p className="text-xs text-[#95979e]">Submit a ticket for technical support, menu edits, or website updates.</p>
+
+            <form onSubmit={handleCreateTicket} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[#95979e] mb-1">Ticket Subject / Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={newTicket.subject}
+                  onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
+                  placeholder="Need seasonal menu price update"
+                  className="huly-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#95979e] mb-1">Detailed Request Message *</label>
+                <textarea
+                  rows={4}
+                  required
+                  value={newTicket.message}
+                  onChange={(e) => setNewTicket({ ...newTicket, message: e.target.value })}
+                  placeholder="Please describe the updates or support needed for your site..."
+                  className="huly-input"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingTicket}
+                className="btn-pill-primary w-full py-2.5 text-xs mt-2"
+              >
+                {submittingTicket ? 'Submitting Ticket...' : 'Submit Support Ticket'}
               </button>
             </form>
           </div>

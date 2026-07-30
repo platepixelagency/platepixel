@@ -27,8 +27,15 @@ export const CatalogManagement: React.FC = () => {
 
   // Modals state
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [showHeroModal, setShowHeroModal] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
+
+  const [heroForm, setHeroForm] = useState({
+    clientProjects: '24 Active',
+    leadCrmWon: '$48,500',
+    maintenanceRenewals: '98% On Time',
+  });
 
   // Forms state
   const [newService, setNewService] = useState({
@@ -61,18 +68,37 @@ export const CatalogManagement: React.FC = () => {
   const loadCatalogData = async () => {
     try {
       setLoading(true);
-      const [servRes, priceRes, portRes] = await Promise.all([
+      const [servRes, priceRes, portRes, heroRes] = await Promise.all([
         fetch('/api/catalog/services').then((r) => r.json()),
         fetch('/api/catalog/pricing').then((r) => r.json()),
         fetch('/api/catalog/portfolio').then((r) => r.json()),
+        fetch('/api/catalog/hero-stats').then((r) => r.json()),
       ]);
       setServices(servRes.services || []);
       setPricing(priceRes.pricing || []);
       setPortfolio(portRes.portfolio || []);
+      if (heroRes.stats) setHeroForm(heroRes.stats);
     } catch (err) {
       console.error('Failed to load catalog data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveHeroStats = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await fetchWithAuth('/catalog/hero-stats', {
+        method: 'POST',
+        body: JSON.stringify(heroForm),
+      });
+      alert('Homepage Live Demo Preview Stats updated successfully!');
+      setShowHeroModal(false);
+    } catch (err: any) {
+      alert(err.message || 'Failed to update hero stats');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -216,10 +242,18 @@ export const CatalogManagement: React.FC = () => {
           <h2 className="text-2xl font-extrabold text-white mt-1">Services, Pricing & Portfolio Manager</h2>
         </div>
 
-        <div className="flex items-center space-x-3 self-start md:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          <button
+            onClick={() => setShowHeroModal(true)}
+            className="btn-pill-secondary text-xs py-2 px-3 flex items-center space-x-1.5 border-[#5683da]/40 text-[#5683da]"
+          >
+            <Edit className="w-3.5 h-3.5" />
+            <span>Edit Home Live Demo Banner</span>
+          </button>
+
           <button
             onClick={loadCatalogData}
-            className="btn-pill-secondary text-xs py-2 px-4 flex items-center space-x-1.5"
+            className="btn-pill-secondary text-xs py-2 px-3 flex items-center space-x-1.5"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>Reload Data</span>
@@ -666,6 +700,62 @@ export const CatalogManagement: React.FC = () => {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT HOMEPAGE HERO BANNER PREVIEW */}
+      {showHeroModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="huly-card max-w-md w-full p-6 md:p-8 space-y-4 relative border-[#5683da]/50">
+            <button onClick={() => setShowHeroModal(false)} className="absolute top-4 right-4 text-[#95979e] hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-bold text-white">Edit Home Live Demo Preview</h3>
+            <p className="text-xs text-[#95979e]">Customize the values shown on the platepixel.agency/workspace/dashboard preview card on the homepage.</p>
+
+            <form onSubmit={handleSaveHeroStats} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[#95979e] mb-1">CLIENT PROJECTS Metric Value *</label>
+                <input
+                  type="text"
+                  required
+                  value={heroForm.clientProjects}
+                  onChange={(e) => setHeroForm({ ...heroForm, clientProjects: e.target.value })}
+                  placeholder="24 Active"
+                  className="huly-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#95979e] mb-1">LEAD CRM WON Metric Value *</label>
+                <input
+                  type="text"
+                  required
+                  value={heroForm.leadCrmWon}
+                  onChange={(e) => setHeroForm({ ...heroForm, leadCrmWon: e.target.value })}
+                  placeholder="$48,500"
+                  className="huly-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#95979e] mb-1">MAINTENANCE RENEWALS Metric Value *</label>
+                <input
+                  type="text"
+                  required
+                  value={heroForm.maintenanceRenewals}
+                  onChange={(e) => setHeroForm({ ...heroForm, maintenanceRenewals: e.target.value })}
+                  placeholder="98% On Time"
+                  className="huly-input"
+                />
+              </div>
+
+              <button type="submit" disabled={submitting} className="btn-pill-primary w-full py-3 text-xs mt-2">
+                {submitting ? 'Saving Live Preview Changes...' : 'Save Live Preview Changes'}
+              </button>
+            </form>
           </div>
         </div>
       )}

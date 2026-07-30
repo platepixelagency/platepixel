@@ -7,7 +7,7 @@ export const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'CLIENT' | 'ADMIN' | 'TEAM_MEMBER'>('CLIENT');
+  const [role, setRole] = useState<'CLIENT' | 'ADMIN'>('CLIENT');
   const [companyName, setCompanyName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
@@ -53,7 +53,7 @@ export const Register: React.FC = () => {
             Create Account
           </h1>
           <p className="text-sm text-[#95979e]">
-            Register as an Agency Admin, Team Member, or Business Client
+            Register as an Agency Admin or Business Client
           </p>
         </div>
 
@@ -66,44 +66,33 @@ export const Register: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Account Role Selector */}
+            {/* Account Role Selector (2 Roles: Client & Admin) */}
             <div>
               <label className="block text-xs font-medium text-[#95979e] uppercase tracking-wider mb-2">
                 Account Type / Role
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setRole('CLIENT')}
-                  className={`py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
+                  className={`py-2 px-4 rounded-lg text-xs font-medium border transition-all ${
                     role === 'CLIENT'
                       ? 'bg-[#5683da]/20 border-[#5683da] text-[#5683da]'
                       : 'bg-[#090a0c] border-[#4a4b50] text-[#95979e] hover:border-[#5683da]'
                   }`}
                 >
-                  🏢 Client
+                  🏢 Client Account
                 </button>
                 <button
                   type="button"
                   onClick={() => setRole('ADMIN')}
-                  className={`py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
+                  className={`py-2 px-4 rounded-lg text-xs font-medium border transition-all ${
                     role === 'ADMIN'
                       ? 'bg-[#ff8964]/20 border-[#ff8964] text-[#ff8964]'
                       : 'bg-[#090a0c] border-[#4a4b50] text-[#95979e] hover:border-[#ff8964]'
                   }`}
                 >
                   👑 Agency Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('TEAM_MEMBER')}
-                  className={`py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                    role === 'TEAM_MEMBER'
-                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                      : 'bg-[#090a0c] border-[#4a4b50] text-[#95979e] hover:border-emerald-500'
-                  }`}
-                >
-                  💻 Team Member
                 </button>
               </div>
             </div>
@@ -121,7 +110,7 @@ export const Register: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Alex Morgan"
-                    className="huly-input pl-10"
+                    className="huly-input huly-input-icon"
                   />
                 </div>
               </div>
@@ -138,7 +127,7 @@ export const Register: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="alex@company.com"
-                    className="huly-input pl-10"
+                    className="huly-input huly-input-icon"
                   />
                 </div>
               </div>
@@ -156,7 +145,7 @@ export const Register: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
-                  className="huly-input pl-10"
+                  className="huly-input huly-input-icon"
                 />
               </div>
             </div>
@@ -174,13 +163,13 @@ export const Register: React.FC = () => {
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="Apex Lounge"
-                      className="huly-input pl-10"
+                      className="huly-input huly-input-icon"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#95979e] uppercase tracking-wider mb-2">
+                  <label className="block text-[#95979e] text-xs font-medium uppercase tracking-wider mb-2">
                     Phone / Mobile
                   </label>
                   <div className="relative">
@@ -190,7 +179,7 @@ export const Register: React.FC = () => {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+1 (555) 019-2831"
-                      className="huly-input pl-10"
+                      className="huly-input huly-input-icon"
                     />
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  getHeroStats, updateHeroStats,
   getServices, createService, updateService, deleteService,
   getPricing, createPricing, updatePricing, deletePricing,
   getPortfolio, createPortfolio, updatePortfolio, deletePortfolio,
@@ -8,12 +9,16 @@ import { authenticateToken, requireRole } from '../middleware/authMiddleware.js'
 
 const router = Router();
 
-// Public routes for website pages
+// Public routes
+router.get('/hero-stats', getHeroStats);
 router.get('/services', getServices);
 router.get('/pricing', getPricing);
 router.get('/portfolio', getPortfolio);
 
-// Protected admin routes for management
+// Admin routes for updating Homepage Hero Banner
+router.post('/hero-stats', authenticateToken, requireRole(['ADMIN', 'TEAM_MEMBER']), updateHeroStats);
+
+// Protected admin routes for catalog management
 router.post('/services', authenticateToken, requireRole(['ADMIN', 'TEAM_MEMBER']), createService);
 router.put('/services/:id', authenticateToken, requireRole(['ADMIN', 'TEAM_MEMBER']), updateService);
 router.delete('/services/:id', authenticateToken, requireRole(['ADMIN']), deleteService);

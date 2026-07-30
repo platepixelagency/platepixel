@@ -1,6 +1,30 @@
 import { Response, Request } from 'express';
 import { prisma } from '../prisma.js';
 
+// In-memory / dynamic Hero Stats state
+export let currentHeroStats = {
+  clientProjects: '24 Active',
+  leadCrmWon: '$48,500',
+  maintenanceRenewals: '98% On Time',
+};
+
+export const getHeroStats = async (_req: Request, res: Response): Promise<void> => {
+  res.status(200).json({ stats: currentHeroStats });
+};
+
+export const updateHeroStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { clientProjects, leadCrmWon, maintenanceRenewals } = req.body;
+    if (clientProjects) currentHeroStats.clientProjects = clientProjects;
+    if (leadCrmWon) currentHeroStats.leadCrmWon = leadCrmWon;
+    if (maintenanceRenewals) currentHeroStats.maintenanceRenewals = maintenanceRenewals;
+
+    res.status(200).json({ message: 'Hero banner stats updated successfully', stats: currentHeroStats });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to update hero stats' });
+  }
+};
+
 // Default Seed Data
 const DEFAULT_SERVICES = [
   {
@@ -96,7 +120,6 @@ export const getServices = async (_req: Request, res: Response): Promise<void> =
   try {
     let services = await prisma.agencyService.findMany({ orderBy: { createdAt: 'desc' } });
 
-    // Auto seed if empty
     if (services.length === 0) {
       await prisma.agencyService.createMany({ data: DEFAULT_SERVICES });
       services = await prisma.agencyService.findMany({ orderBy: { createdAt: 'desc' } });
@@ -167,7 +190,6 @@ export const getPricing = async (_req: Request, res: Response): Promise<void> =>
   try {
     let pricing = await prisma.agencyPricing.findMany({ orderBy: { createdAt: 'desc' } });
 
-    // Auto seed if empty
     if (pricing.length === 0) {
       await prisma.agencyPricing.createMany({ data: DEFAULT_PRICING });
       pricing = await prisma.agencyPricing.findMany({ orderBy: { createdAt: 'desc' } });
@@ -238,7 +260,6 @@ export const getPortfolio = async (_req: Request, res: Response): Promise<void> 
   try {
     let portfolio = await prisma.agencyPortfolio.findMany({ orderBy: { createdAt: 'desc' } });
 
-    // Auto seed if empty
     if (portfolio.length === 0) {
       await prisma.agencyPortfolio.createMany({ data: DEFAULT_PORTFOLIO });
       portfolio = await prisma.agencyPortfolio.findMany({ orderBy: { createdAt: 'desc' } });
