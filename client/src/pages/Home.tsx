@@ -132,44 +132,48 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Metrics Banner */}
-      <section className="border-y border-[#4a4b50]/40 bg-[#111111]/60 py-12 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold text-white">100+</div>
-            <div className="text-xs text-[#95979e] mt-1 font-mono uppercase">Leads Generated</div>
+      <section className="border-y border-[#4a4b50]/40 bg-[#090a0c]/80 backdrop-blur-md py-14 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="huly-card p-6 hover:border-[#5683da] shadow-lg hover:shadow-[#5683da]/20 transition-all transform hover:-translate-y-1.5">
+            <div className="text-3xl sm:text-4xl font-extrabold text-white text-vip-shimmer">100+</div>
+            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-wider">Leads Generated</div>
           </div>
-          <div>
+          <div className="huly-card p-6 hover:border-[#5683da] shadow-lg hover:shadow-[#5683da]/20 transition-all transform hover:-translate-y-1.5">
             <div className="text-3xl sm:text-4xl font-extrabold text-[#5683da]">30+</div>
-            <div className="text-xs text-[#95979e] mt-1 font-mono uppercase">Active Retainer Clients</div>
+            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-wider">Active Retainer Clients</div>
           </div>
-          <div>
+          <div className="huly-card p-6 hover:border-[#ff8964] shadow-lg hover:shadow-[#ff8964]/20 transition-all transform hover:-translate-y-1.5">
             <div className="text-3xl sm:text-4xl font-extrabold text-[#ff8964]">99.9%</div>
-            <div className="text-xs text-[#95979e] mt-1 font-mono uppercase">Uptime & Security</div>
+            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-wider">Uptime & Security</div>
           </div>
-          <div>
+          <div className="huly-card p-6 hover:border-emerald-400 shadow-lg hover:shadow-emerald-400/20 transition-all transform hover:-translate-y-1.5">
             <div className="text-3xl sm:text-4xl font-extrabold text-emerald-400">100%</div>
-            <div className="text-xs text-[#95979e] mt-1 font-mono uppercase">On-Time Delivery</div>
+            <div className="text-xs text-[#95979e] mt-2 font-mono uppercase tracking-wider">On-Time Delivery</div>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section id="services-section" className="py-24 px-6 max-w-7xl mx-auto">
+      <section id="services-section" className="py-24 px-6 max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
-          <span className="tag-pill bg-[#5683da]/20 text-[#5683da] uppercase tracking-wider font-mono">Full Spectrum Services</span>
-          <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white mt-3">
-            Everything Your Business Needs to Thrive Online
+          <div className="tag-pill-vip mb-4">
+            <Sparkles className="w-4 h-4 text-[#ff8964] animate-spin-slow" />
+            <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">Full Spectrum Services</span>
+          </div>
+
+          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mt-3">
+            Everything Your Business Needs to <span className="text-vip-shimmer">Thrive Online</span>
           </h2>
-          <p className="text-sm text-[#95979e] mt-3 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-[#95979e] mt-3 max-w-2xl mx-auto leading-relaxed">
             From modern responsive websites to automated CRM platforms and monthly maintenance retainers.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Card 1 */}
-          <div className="huly-card p-8 flex flex-col justify-between">
+          <div className="huly-card p-8 flex flex-col justify-between stagger-1 transition-all transform hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(86,131,218,0.25)]">
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-[#5683da]/10 text-[#5683da] flex items-center justify-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-[#5683da]/10 text-[#5683da] flex items-center justify-center mb-6 shadow-md shadow-[#5683da]/10">
                 <Globe className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Starter Websites</h3>
@@ -197,12 +201,12 @@ export const Home: React.FC = () => {
           </div>
 
           {/* Card 2 */}
-          <div className="huly-card p-8 flex flex-col justify-between border-[#ff8964]/40 relative">
-            <div className="absolute top-4 right-4 tag-pill bg-[#ff8964]/20 text-[#ff8964] text-[10px]">
+          <div className="huly-card p-8 flex flex-col justify-between border-[#ff8964] relative stagger-2 animate-holo-glow transition-all transform hover:-translate-y-2">
+            <div className="absolute -top-3.5 right-6 tag-pill bg-[#ff8964] text-black font-bold text-[10px] uppercase shadow-md">
               POPULAR RETAINER
             </div>
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-[#ff8964]/10 text-[#ff8964] flex items-center justify-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-[#ff8964]/10 text-[#ff8964] flex items-center justify-center mb-6 shadow-md shadow-[#ff8964]/10">
                 <TrendingUp className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Monthly Growth</h3>
@@ -230,9 +234,9 @@ export const Home: React.FC = () => {
           </div>
 
           {/* Card 3 */}
-          <div className="huly-card p-8 flex flex-col justify-between">
+          <div className="huly-card p-8 flex flex-col justify-between stagger-3 transition-all transform hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(16,185,129,0.25)]">
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-6 shadow-md shadow-emerald-500/10">
                 <Code className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Premium Web Apps</h3>
@@ -262,18 +266,22 @@ export const Home: React.FC = () => {
       </section>
 
       {/* CTA Lead Intake Banner */}
-      <section className="py-20 px-6 max-w-5xl mx-auto">
-        <div className="huly-card p-10 md:p-14 text-center relative overflow-hidden bg-gradient-to-r from-[#111111] via-[#151924] to-[#111111] border-[#5683da]/40">
+      <section className="py-20 px-6 max-w-5xl mx-auto relative z-10">
+        <div className="huly-card p-10 md:p-14 text-center relative overflow-hidden bg-gradient-to-r from-[#111111] via-[#151924] to-[#111111] border-[#5683da]/50 shadow-[0_0_50px_rgba(86,131,218,0.25)] animate-float-3d">
           <div className="relative z-10">
-            <span className="tag-pill bg-[#ff8964]/20 text-[#ff8964] font-mono text-xs uppercase">Get Started Today</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-3 mb-4">
-              Ready to Upgrade Your Agency Digital Presence?
+            <div className="tag-pill-vip mb-4">
+              <Sparkles className="w-4 h-4 text-[#ff8964] animate-spin-slow" />
+              <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">Get Started Today</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white mt-3 mb-4">
+              Ready to Upgrade Your Agency <span className="text-vip-shimmer">Digital Presence?</span>
             </h2>
-            <p className="text-sm text-[#95979e] max-w-xl mx-auto mb-8">
+            <p className="text-sm sm:text-base text-[#95979e] max-w-xl mx-auto mb-8 leading-relaxed">
               Submit your project details in under 2 minutes. Our team will prepare a custom proposal and website preview.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link to="/contact" className="btn-pill-primary py-3.5 px-8 text-sm flex items-center justify-center space-x-2">
+              <Link to="/contact" className="btn-pill-primary py-3.5 px-8 text-sm flex items-center justify-center space-x-2 shadow-lg shadow-[#5683da]/30">
                 <span>Submit Lead Form</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
