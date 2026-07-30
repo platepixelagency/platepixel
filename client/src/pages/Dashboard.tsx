@@ -4,6 +4,7 @@ import { LeadCRM } from '../components/crm/LeadCRM';
 import { ClientManagement } from '../components/clients/ClientManagement';
 import { ProjectManagement } from '../components/projects/ProjectManagement';
 import { InvoiceManagement } from '../components/invoices/InvoiceManagement';
+import { ClientPortal } from '../components/portal/ClientPortal';
 import { 
   ShieldCheck, 
   Database, 
@@ -48,6 +49,18 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   const isAdminOrTeam = user?.role === 'ADMIN' || user?.role === 'TEAM_MEMBER';
+  const isClient = user?.role === 'CLIENT';
+
+  // If user is Client, automatically present the Client Portal Workspace
+  if (isClient) {
+    return (
+      <div className="min-h-[calc(100vh-65px)] bg-[#090a0c] p-6 md:p-10">
+        <div className="max-w-7xl mx-auto">
+          <ClientPortal />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-65px)] bg-[#090a0c] p-6 md:p-10">
@@ -158,7 +171,7 @@ export const Dashboard: React.FC = () => {
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="tag-pill bg-[#5683da]/20 text-[#5683da] border border-[#5683da]/30 flex items-center space-x-1">
                       <Sparkles className="w-3 h-3 text-[#ff8964]" />
-                      <span>Phase 6 Invoice System Active</span>
+                      <span>Phase 7 Client Portal Active</span>
                     </span>
                     <span className="text-xs text-[#95979e] font-mono">ID: {user?.id.substring(0, 8)}...</span>
                   </div>
