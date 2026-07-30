@@ -490,7 +490,10 @@ export const ClientPortal: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-bold text-sm text-white">{doc.fileName}</h4>
-                      <span className="text-[10px] text-[#95979e] font-mono">{new Date(doc.createdAt).toLocaleDateString()}</span>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <span className="tag-pill bg-purple-500/20 text-purple-300 font-mono text-[9px]">Legal Agreement</span>
+                        <span className="text-[10px] text-[#95979e] font-mono">{new Date(doc.createdAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
 

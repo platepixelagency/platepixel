@@ -68,7 +68,8 @@ export const ClientManagement: React.FC = () => {
 
   // Quick Document Form State
   const [docForm, setDocForm] = useState({
-    fileName: '',
+    docType: 'Change Request Agreement (CRA)',
+    fileName: 'Change Request Agreement (CRA).pdf',
     fileUrl: '',
   });
 
@@ -192,7 +193,11 @@ export const ClientManagement: React.FC = () => {
 
       alert(`Document "${docForm.fileName}" uploaded for ${docModalClient.companyName}!`);
       setDocModalClient(null);
-      setDocForm({ fileName: '', fileUrl: '' });
+      setDocForm({
+        docType: 'Change Request Agreement (CRA)',
+        fileName: 'Change Request Agreement (CRA).pdf',
+        fileUrl: '',
+      });
       loadClients();
     } catch (err: any) {
       alert(err.message || 'Failed to upload document');
@@ -365,7 +370,11 @@ export const ClientManagement: React.FC = () => {
                   <button
                     onClick={() => {
                       setDocModalClient(client);
-                      setDocForm({ fileName: '', fileUrl: '' });
+                      setDocForm({
+                        docType: 'Change Request Agreement (CRA)',
+                        fileName: 'Change Request Agreement (CRA).pdf',
+                        fileUrl: '',
+                      });
                     }}
                     className="btn-pill-secondary py-1.5 px-2 text-[11px] text-purple-400 border-purple-500/40 hover:bg-purple-500/10 flex items-center justify-center space-x-1"
                     title="Upload Contract PDF for Client"
@@ -477,18 +486,41 @@ export const ClientManagement: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-xl font-bold text-white">Upload Client Document PDF</h3>
-            <p className="text-xs text-[#95979e]">Upload agreement PDF or design asset for <span className="text-white font-bold">{docModalClient.companyName}</span></p>
+            <h3 className="text-xl font-bold text-white">Upload Legal Agreement & Document PDF</h3>
+            <p className="text-xs text-[#95979e]">Select agreement preset or custom asset for <span className="text-white font-bold">{docModalClient.companyName}</span></p>
 
             <form onSubmit={handleQuickUploadDoc} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[#95979e] mb-1">Document Title *</label>
+                <label className="block text-[#95979e] mb-1">Agreement / Document Type *</label>
+                <select
+                  value={docForm.docType}
+                  onChange={(e) => {
+                    const selected = e.target.value;
+                    setDocForm({
+                      ...docForm,
+                      docType: selected,
+                      fileName: selected === 'Custom Document' ? '' : `${selected}.pdf`,
+                    });
+                  }}
+                  className="huly-input bg-[#090a0c]"
+                >
+                  <option value="Change Request Agreement (CRA)">Change Request Agreement (CRA)</option>
+                  <option value="Ownership & Intellectual Property Transfer">Ownership & Intellectual Property Transfer</option>
+                  <option value="Hosting & Domain Responsibility Clause">Hosting & Domain Responsibility Clause</option>
+                  <option value="Maintenance Agreement (Monthly AMC)">Maintenance Agreement (Monthly AMC)</option>
+                  <option value="Master Service Level Agreement (SLA)">Master Service Level Agreement (SLA)</option>
+                  <option value="Custom Document">Custom Document / Asset PDF</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[#95979e] mb-1">Document Display Title / Filename *</label>
                 <input
                   type="text"
                   required
                   value={docForm.fileName}
                   onChange={(e) => setDocForm({ ...docForm, fileName: e.target.value })}
-                  placeholder="Master Service Agreement SLA.pdf"
+                  placeholder="Change Request Agreement (CRA).pdf"
                   className="huly-input"
                 />
               </div>
@@ -500,13 +532,13 @@ export const ClientManagement: React.FC = () => {
                   required
                   value={docForm.fileUrl}
                   onChange={(e) => setDocForm({ ...docForm, fileUrl: e.target.value })}
-                  placeholder="https://drive.google.com/file/... or /assets/doc.pdf"
+                  placeholder="https://drive.google.com/file/... or /assets/cra_agreement.pdf"
                   className="huly-input"
                 />
               </div>
 
               <button type="submit" disabled={submitting} className="btn-pill-primary w-full py-2.5 text-xs bg-purple-500 hover:bg-purple-600 border-none text-white font-bold mt-2">
-                {submitting ? 'Uploading Document...' : 'Publish Document to Client Portal'}
+                {submitting ? 'Uploading Document...' : `Publish ${docForm.docType.split(' ')[0]} to Client Portal`}
               </button>
             </form>
           </div>
