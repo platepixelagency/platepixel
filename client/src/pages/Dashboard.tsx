@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { LeadCRM } from '../components/crm/LeadCRM';
 import { ClientManagement } from '../components/clients/ClientManagement';
 import { ProjectManagement } from '../components/projects/ProjectManagement';
+import { InvoiceManagement } from '../components/invoices/InvoiceManagement';
 import { 
   ShieldCheck, 
   Database, 
@@ -14,12 +15,13 @@ import {
   Key,
   LayoutDashboard,
   Building,
-  CheckCircle
+  CheckCircle,
+  CreditCard
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'clients' | 'projects'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'clients' | 'projects' | 'invoices'>('overview');
   const [health, setHealth] = useState<{
     status: string;
     database: string;
@@ -27,6 +29,7 @@ export const Dashboard: React.FC = () => {
     leadCount: number;
     clientCount: number;
     projectCount: number;
+    invoiceCount: number;
     timestamp: string;
   } | null>(null);
   const [loadingHealth, setLoadingHealth] = useState(true);
@@ -74,7 +77,7 @@ export const Dashboard: React.FC = () => {
               }`}
             >
               <Users className="w-4 h-4 text-[#ff8964]" />
-              <span>Lead CRM Pipeline</span>
+              <span>Lead CRM</span>
               {health?.leadCount !== undefined && (
                 <span className="w-5 h-5 rounded-full bg-[#ff8964] text-black text-[10px] font-bold flex items-center justify-center">
                   {health.leadCount}
@@ -91,7 +94,7 @@ export const Dashboard: React.FC = () => {
               }`}
             >
               <Building className="w-4 h-4 text-emerald-400" />
-              <span>Client Accounts</span>
+              <span>Clients Directory</span>
               {health?.clientCount !== undefined && (
                 <span className="w-5 h-5 rounded-full bg-emerald-400 text-black text-[10px] font-bold flex items-center justify-center">
                   {health.clientCount}
@@ -108,10 +111,27 @@ export const Dashboard: React.FC = () => {
               }`}
             >
               <Briefcase className="w-4 h-4 text-purple-400" />
-              <span>Projects & Milestones</span>
+              <span>Projects Board</span>
               {health?.projectCount !== undefined && (
                 <span className="w-5 h-5 rounded-full bg-purple-400 text-black text-[10px] font-bold flex items-center justify-center">
                   {health.projectCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('invoices')}
+              className={`flex items-center space-x-2 py-2 px-5 rounded-full text-xs font-medium transition-all ${
+                activeTab === 'invoices'
+                  ? 'bg-[#5683da] text-white shadow-lg shadow-[#5683da]/20'
+                  : 'bg-[#111111] border border-[#4a4b50] text-[#95979e] hover:text-white'
+              }`}
+            >
+              <FileText className="w-4 h-4 text-amber-400" />
+              <span>Invoices & Payments</span>
+              {health?.invoiceCount !== undefined && (
+                <span className="w-5 h-5 rounded-full bg-amber-400 text-black text-[10px] font-bold flex items-center justify-center">
+                  {health.invoiceCount}
                 </span>
               )}
             </button>
@@ -125,6 +145,8 @@ export const Dashboard: React.FC = () => {
           <ClientManagement />
         ) : isAdminOrTeam && activeTab === 'projects' ? (
           <ProjectManagement />
+        ) : isAdminOrTeam && activeTab === 'invoices' ? (
+          <InvoiceManagement />
         ) : (
           /* Tab Content: Workspace Overview */
           <div className="space-y-8">
@@ -136,7 +158,7 @@ export const Dashboard: React.FC = () => {
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="tag-pill bg-[#5683da]/20 text-[#5683da] border border-[#5683da]/30 flex items-center space-x-1">
                       <Sparkles className="w-3 h-3 text-[#ff8964]" />
-                      <span>Phase 5 Project Management Active</span>
+                      <span>Phase 6 Invoice System Active</span>
                     </span>
                     <span className="text-xs text-[#95979e] font-mono">ID: {user?.id.substring(0, 8)}...</span>
                   </div>
@@ -145,7 +167,7 @@ export const Dashboard: React.FC = () => {
                     Welcome, {user?.name}
                   </h1>
                   <p className="text-sm text-[#95979e] mt-1 max-w-xl">
-                    Track project milestone delivery dates, client account renewals, and lead pipelines from your central workspace.
+                    Manage agency billing, collect client payments, track project development, and run lead pipelines from your dashboard.
                   </p>
                 </div>
 
@@ -163,6 +185,18 @@ export const Dashboard: React.FC = () => {
 
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="huly-card p-5 flex items-center space-x-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-[#95979e] uppercase font-mono">Total Invoices</div>
+                  <div className="text-sm font-semibold text-white mt-0.5">
+                    {health?.invoiceCount ?? 0} Invoices Issued
+                  </div>
+                </div>
+              </div>
+
               <div className="huly-card p-5 flex items-center space-x-4">
                 <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
                   <Briefcase className="w-5 h-5" />
@@ -198,57 +232,54 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="huly-card p-5 flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-xl bg-[#5683da]/10 text-[#5683da] flex items-center justify-center">
-                  <Database className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-[#95979e] uppercase font-mono">Database Status</div>
-                  <div className="text-sm font-semibold text-white flex items-center space-x-1.5 mt-0.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Connected</span>
-                  </div>
-                </div>
-              </div>
             </div>
 
-            {/* Quick Access Card */}
+            {/* Quick Access Grid */}
             {isAdminOrTeam && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="huly-card p-6 border-[#5683da]/40 bg-[#5683da]/5 flex flex-col justify-between">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="huly-card p-5 border-[#5683da]/40 bg-[#5683da]/5 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-white text-base mb-1">Lead CRM Pipeline</h3>
-                    <p className="text-xs text-[#95979e]">Track incoming inquiries and perform 1-click client conversions.</p>
+                    <h3 className="font-bold text-white text-sm mb-1">Lead CRM Pipeline</h3>
+                    <p className="text-[11px] text-[#95979e]">Track incoming inquiries and perform 1-click conversions.</p>
                   </div>
-                  <button onClick={() => setActiveTab('leads')} className="mt-4 btn-pill-primary py-2 px-5 text-xs self-start">
+                  <button onClick={() => setActiveTab('leads')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] self-start">
                     Lead CRM →
                   </button>
                 </div>
 
-                <div className="huly-card p-6 border-emerald-500/40 bg-emerald-500/5 flex flex-col justify-between">
+                <div className="huly-card p-5 border-emerald-500/40 bg-emerald-500/5 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-white text-base mb-1">Client Directory</h3>
-                    <p className="text-xs text-[#95979e]">Manage agency client accounts and renewal schedules.</p>
+                    <h3 className="font-bold text-white text-sm mb-1">Client Directory</h3>
+                    <p className="text-[11px] text-[#95979e]">Manage client profiles and service renewal dates.</p>
                   </div>
-                  <button onClick={() => setActiveTab('clients')} className="mt-4 btn-pill-primary py-2 px-5 text-xs bg-emerald-600 hover:bg-emerald-500 self-start">
+                  <button onClick={() => setActiveTab('clients')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-emerald-600 hover:bg-emerald-500 self-start">
                     Client Directory →
                   </button>
                 </div>
 
-                <div className="huly-card p-6 border-purple-500/40 bg-purple-500/5 flex flex-col justify-between">
+                <div className="huly-card p-5 border-purple-500/40 bg-purple-500/5 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-white text-base mb-1">Projects & Milestones</h3>
-                    <p className="text-xs text-[#95979e]">Track development boards, QA testing, and delivery dates.</p>
+                    <h3 className="font-bold text-white text-sm mb-1">Projects Board</h3>
+                    <p className="text-[11px] text-[#95979e]">Track milestone status boards and delivery target dates.</p>
                   </div>
-                  <button onClick={() => setActiveTab('projects')} className="mt-4 btn-pill-primary py-2 px-5 text-xs bg-purple-600 hover:bg-purple-500 self-start">
-                    Project Boards →
+                  <button onClick={() => setActiveTab('projects')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-purple-600 hover:bg-purple-500 self-start">
+                    Projects Board →
+                  </button>
+                </div>
+
+                <div className="huly-card p-5 border-amber-500/40 bg-amber-500/5 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-white text-sm mb-1">Invoices & Payments</h3>
+                    <p className="text-[11px] text-[#95979e]">Issue invoices, record payments, and print statements.</p>
+                  </div>
+                  <button onClick={() => setActiveTab('invoices')} className="mt-3 btn-pill-primary py-1.5 px-4 text-[11px] bg-amber-600 hover:bg-amber-500 text-black font-bold self-start">
+                    Invoices & Payments →
                   </button>
                 </div>
               </div>
             )}
 
-            {/* User Session Profile Raw Dump */}
+            {/* User Session Details */}
             <div className="huly-card p-6">
               <h3 className="text-sm font-semibold text-white mb-3 flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-emerald-400" />
