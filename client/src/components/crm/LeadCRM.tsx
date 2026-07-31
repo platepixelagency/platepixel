@@ -564,12 +564,7 @@ export const LeadCRM: React.FC = () => {
                       </option>
                     ))
                   ) : (
-                    <>
-                      <option value="Starter Business Website">Starter Business Website (₹14,999)</option>
-                      <option value="Restaurant Website & Live QR Menu">Restaurant Website & Live QR Menu (₹24,999)</option>
-                      <option value="Monthly Growth & Security Retainer">Monthly Growth & Security Retainer (₹2,999/mo)</option>
-                      <option value="Custom Web Application & CRM">Custom Web Application & CRM (₹49,999+)</option>
-                    </>
+                    <option value="">Loading database services...</option>
                   )}
                 </select>
               </div>
