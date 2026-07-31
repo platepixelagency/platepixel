@@ -42,41 +42,37 @@ body {
   z-index: 0;
 }
 
-/* Cosmic 3D Perspective Glow Cards */
+/* Cosmic Glassmorphism Cards */
 .huly-card {
   background-color: #111111;
   border: 1px solid #4a4b50;
   border-radius: 14px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
-  transform-style: preserve-3d;
-  perspective: 1000px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .huly-card:hover {
   border-color: rgba(86, 131, 218, 0.6);
-  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(86, 131, 218, 0.2);
-  transform: translateY(-6px) rotateX(2deg) scale(1.01);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(86, 131, 218, 0.15);
 }
 
-/* Universal Ultra-Fast 1-Click Smooth Responsive Buttons */
-button, input[type="submit"], .btn-pill-primary, .btn-pill-secondary {
-  cursor: pointer;
+/* Universal Ultra-Fast 1-Click Responsive Buttons */
+button, input[type="submit"], input[type="button"], .btn-pill-primary, .btn-pill-secondary {
+  cursor: pointer !important;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto !important;
   user-select: none;
-  touch-action: manipulation;
-  transition: transform 0.12s cubic-bezier(0.2, 0, 0.1, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-  will-change: transform, box-shadow;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 button:active, input[type="submit"]:active, .btn-pill-primary:active, .btn-pill-secondary:active {
-  transform: scale(0.96) translateY(1px) !important;
-  box-shadow: 0 0 12px rgba(86, 131, 218, 0.4) !important;
+  opacity: 0.9;
 }
 
 button:disabled, input[type="submit"]:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none !important;
+  opacity: 0.6;
+  cursor: not-allowed !important;
 }
 
 /* Pill Button Styles */
