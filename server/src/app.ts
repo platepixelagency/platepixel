@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 // Health Check API
-app.get(['/api/health', '/health'], async (_req, res) => {
+app.get(['/api/health', '/health', '/api'], async (_req, res) => {
   try {
     const userCount = await prisma.user.count();
     const leadCount = await prisma.lead.count();
