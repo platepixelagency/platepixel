@@ -98,7 +98,20 @@ export const ClientPortal: React.FC = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
     loadPortalData();
+
+    // Auto retry after 1.5s if initial data was null
+    const timer = setTimeout(() => {
+      if (isMounted && !data) {
+        loadPortalData();
+      }
+    }, 1500);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleUploadDocument = async (e: React.FormEvent) => {

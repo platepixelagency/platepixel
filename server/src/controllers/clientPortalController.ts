@@ -3,6 +3,23 @@ import { prisma } from '../prisma.js';
 import { supabase } from '../supabase.js';
 import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
 
+// Helper to ensure valid UUID string for Supabase foreign keys
+const ensureValidUuid = (idString: string): string => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(idString)) return idString;
+  if (idString === 'admin_default_id') return 'a0000000-0000-0000-0000-000000000001';
+  return 'b0000000-0000-0000-0000-' + Math.abs(hashCode(idString)).toString(16).padStart(12, '0').slice(0, 12);
+};
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
+}
+
 // Get unified Client Portal Summary with Auto-Provisioning fallback
 export const getClientPortalSummary = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -11,12 +28,14 @@ export const getClientPortalSummary = async (req: AuthenticatedRequest, res: Res
       return;
     }
 
+    const userId = req.user.userId;
+    const supaUserId = ensureValidUuid(userId);
     let client: any = null;
 
     // 1. Try Prisma lookup
     try {
       client = await prisma.client.findUnique({
-        where: { userId: req.user.userId },
+        where: { userId },
         include: {
           user: { select: { id: true, name: true, email: true } },
           projects: { orderBy: { createdAt: 'desc' } },
@@ -33,7 +52,7 @@ export const getClientPortalSummary = async (req: AuthenticatedRequest, res: Res
         const { data: supaClient } = await supabase
           .from('clients')
           .select('*, user:users(*)')
-          .eq('user_id', req.user.userId)
+          .eq('user_id', supaUserId)
           .maybeSingle();
 
         if (supaClient) {
@@ -61,18 +80,26 @@ export const getClientPortalSummary = async (req: AuthenticatedRequest, res: Res
 
     // 3. Auto-Provision Client Profile if missing
     if (!client) {
-      const clientId = `cli_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const clientId = ensureValidUuid(`cli_${Date.now()}_${Math.random()}`);
       const userEmail = req.user.email || 'client@platepixel.com';
       const userName = userEmail.split('@')[0];
-      const companyName = `${userName.charAt(0).toUpperCase() + userName.slice(1)}'s Business`;
+      const companyName = `${userName.charAt(0).toUpperCase() + userName.slice(1)}'s Business Workspace`;
       const renewalDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
       try {
+        await supabase.from('users').upsert({
+          id: supaUserId,
+          name: userName,
+          email: userEmail,
+          password: 'HASHED_PASSWORD',
+          role: req.user.role || 'CLIENT',
+        });
+
         await supabase.from('clients').upsert({
           id: clientId,
-          user_id: req.user.userId,
+          user_id: supaUserId,
           company_name: companyName,
-          phone: '',
+          phone: '+1 (555) 019-2831',
           address: 'PlatePixel Client Workspace',
           renewal_date: renewalDate,
         });
@@ -82,9 +109,9 @@ export const getClientPortalSummary = async (req: AuthenticatedRequest, res: Res
         await prisma.client.create({
           data: {
             id: clientId,
-            userId: req.user.userId,
+            userId,
             companyName,
-            phone: '',
+            phone: '+1 (555) 019-2831',
             address: 'PlatePixel Client Workspace',
             renewalDate: new Date(renewalDate),
           },
@@ -93,12 +120,12 @@ export const getClientPortalSummary = async (req: AuthenticatedRequest, res: Res
 
       client = {
         id: clientId,
-        userId: req.user.userId,
+        userId,
         companyName,
-        phone: '',
+        phone: '+1 (555) 019-2831',
         address: 'PlatePixel Client Workspace',
         renewalDate,
-        user: { id: req.user.userId, name: userName, email: userEmail },
+        user: { id: userId, name: userName, email: userEmail },
         projects: [],
         invoices: [],
         tickets: [],
@@ -157,7 +184,7 @@ export const createDocument = async (req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    const docId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const docId = ensureValidUuid(`doc_${Date.now()}_${Math.random()}`);
     let document: any = null;
 
     try {
