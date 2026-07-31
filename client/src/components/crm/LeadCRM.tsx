@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Lead } from '../../types';
 import { fetchWithAuth } from '../../services/api';
+import { subscribeToRealtimeTable } from '../../services/supabase';
 import { 
   Plus, 
   Search, 
@@ -61,6 +62,8 @@ export const LeadCRM: React.FC = () => {
 
   useEffect(() => {
     loadLeads();
+    const channel = subscribeToRealtimeTable('leads', () => loadLeads());
+    return () => { channel.unsubscribe(); };
   }, []);
 
   const handleCreateLead = async (e: React.FormEvent) => {
