@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchWithAuth } from '../../services/api';
+import { supabase } from '../../services/supabase';
+import { useAuth } from '../../context/AuthContext';
 import { OrbLoader } from '../OrbLoader';
 import { 
   Building, 
@@ -46,6 +48,7 @@ interface PortalData {
 }
 
 export const ClientPortal: React.FC = () => {
+  const { user } = useAuth();
   const [data, setData] = useState<PortalData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'invoices' | 'documents' | 'tickets'>('overview');
@@ -88,8 +91,106 @@ export const ClientPortal: React.FC = () => {
   const loadPortalData = async () => {
     try {
       setLoading(true);
-      const res = await fetchWithAuth<{ summary: PortalData }>('/portal/summary');
-      setData(res.summary);
+      let portalSummary: PortalData | null = null;
+
+      // 1. Primary fetch via backend API
+      try {
+        const res = await fetchWithAuth<{ summary: PortalData }>('/portal/summary');
+        if (res.summary?.client) {
+          portalSummary = res.summary;
+        }
+      } catch (e) {}
+
+      // 2. Direct Supabase DB Fetching Fallback
+      if (!portalSummary && user) {
+        try {
+          const cleanEmail = user.email ? user.email.toLowerCase().trim() : '';
+
+          const { data: portalClient } = await supabase
+            .from('portal_clients')
+            .select('*')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+
+          const { data: supaClient } = await supabase
+            .from('clients')
+            .select('*, user:users(*)')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          const resolvedName = portalClient?.name || supaClient?.user?.name || user.name || 'Client';
+          const resolvedEmail = portalClient?.email || supaClient?.user?.email || user.email || '';
+          const resolvedCompany = portalClient?.company_name || supaClient?.company_name || `${resolvedName}'s Business Workspace`;
+          const resolvedPhone = portalClient?.phone || supaClient?.phone || '';
+          const resolvedId = supaClient?.id || portalClient?.id || user.id;
+
+          const { data: projects } = await supabase.from('projects').select('*').eq('client_id', resolvedId);
+          const { data: invoices } = await supabase.from('invoices').select('*, payments(*)').eq('client_id', resolvedId);
+          const { data: tickets } = await supabase.from('tickets').select('*').eq('client_id', resolvedId);
+          const { data: documents } = await supabase.from('documents').select('*').eq('client_id', resolvedId);
+
+          const projectsList = projects || [];
+          const invoicesList = invoices || [];
+          const ticketsList = tickets || [];
+          const documentsList = documents || [];
+
+          const totalInvoiced = invoicesList.reduce((sum: number, inv: any) => sum + (parseFloat(inv.amount) || 0), 0);
+          const totalPaid = invoicesList.filter((i: any) => i.status === 'PAID').reduce((sum: number, inv: any) => sum + (parseFloat(inv.amount) || 0), 0);
+
+          portalSummary = {
+            client: {
+              id: resolvedId,
+              companyName: resolvedCompany,
+              phone: resolvedPhone,
+              address: supaClient?.address || 'PlatePixel Client Workspace',
+              renewalDate: supaClient?.renewal_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+              user: { name: resolvedName, email: resolvedEmail },
+              projects: projectsList,
+              invoices: invoicesList,
+              tickets: ticketsList,
+              documents: documentsList,
+            },
+            metrics: {
+              totalInvoiced,
+              totalPaid,
+              pendingBalance: totalInvoiced - totalPaid,
+              activeProjects: projectsList.filter((p: any) => p.status !== 'DELIVERED').length,
+              openTickets: ticketsList.filter((t: any) => t.status !== 'CLOSED').length,
+              totalDocuments: documentsList.length,
+            },
+          };
+        } catch (e) {
+          console.error('Supabase direct portal fetch notice:', e);
+        }
+      }
+
+      // 3. Guarantee Client Workspace state if completely new
+      if (!portalSummary && user) {
+        portalSummary = {
+          client: {
+            id: user.id,
+            companyName: `${user.name}'s Business Workspace`,
+            phone: '',
+            address: 'PlatePixel Client Workspace',
+            renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+            user: { name: user.name, email: user.email },
+            projects: [],
+            invoices: [],
+            tickets: [],
+            documents: [],
+          },
+          metrics: {
+            totalInvoiced: 0,
+            totalPaid: 0,
+            pendingBalance: 0,
+            activeProjects: 0,
+            openTickets: 0,
+            totalDocuments: 0,
+          },
+        };
+      }
+
+      setData(portalSummary);
     } catch (err: any) {
       console.error('Failed to load client portal data:', err);
     } finally {
@@ -98,20 +199,7 @@ export const ClientPortal: React.FC = () => {
   };
 
   useEffect(() => {
-    let isMounted = true;
     loadPortalData();
-
-    // Auto retry after 1.5s if initial data was null
-    const timer = setTimeout(() => {
-      if (isMounted && !data) {
-        loadPortalData();
-      }
-    }, 1500);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
   }, []);
 
   const handleUploadDocument = async (e: React.FormEvent) => {
