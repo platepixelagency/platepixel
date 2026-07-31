@@ -13,7 +13,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://platepixel-api.up.railway.app/api/:path*"
+      "destination": "/api/:path*"
     },
     {
       "source": "/(.*)",
