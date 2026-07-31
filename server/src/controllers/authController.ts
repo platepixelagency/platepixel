@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { prisma } from '../prisma.js';
 import { supabase } from '../supabase.js';
 import { generateToken } from '../utils/jwt.js';
@@ -18,24 +19,78 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const cleanName = name.trim();
     const assignedRole = role && ['ADMIN', 'TEAM_MEMBER', 'CLIENT'].includes(role) ? role : 'CLIENT';
     const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = crypto.randomUUID();
+    const clientId = crypto.randomUUID();
 
-    let user: any = null;
-
-    // 1. Primary User Lookup via Prisma
+    // 1. Check existing user in Prisma or Supabase DB
     try {
-      const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
-      if (existingUser) {
+      const existingPrismaUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+      if (existingPrismaUser) {
         res.status(400).json({ error: 'User with this email already exists' });
         return;
       }
-    } catch (prismaErr: any) {
-      console.warn('Prisma lookup warning during registration:', prismaErr.message || prismaErr);
+    } catch (e) {}
+
+    try {
+      const { data: existingSupaUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (existingSupaUser) {
+        res.status(400).json({ error: 'User with this email already exists' });
+        return;
+      }
+    } catch (e) {}
+
+    let user: any = null;
+
+    // 2. Primary Insert via Supabase JS SDK (Guarantees UUID compatibility)
+    try {
+      const { data: newSupaUser, error: supaUserErr } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          name: cleanName,
+          email: cleanEmail,
+          password: hashedPassword,
+          role: assignedRole,
+        })
+        .select()
+        .single();
+
+      if (supaUserErr) {
+        console.error('Supabase user registration error:', supaUserErr.message);
+      } else if (newSupaUser) {
+        user = {
+          id: newSupaUser.id,
+          name: newSupaUser.name,
+          email: newSupaUser.email,
+          role: newSupaUser.role,
+          createdAt: newSupaUser.created_at || new Date().toISOString(),
+        };
+
+        if (assignedRole === 'CLIENT') {
+          await supabase.from('clients').insert({
+            id: clientId,
+            user_id: newSupaUser.id,
+            company_name: companyName || `${cleanName}'s Business`,
+            phone: phone || '',
+            address: address || '',
+            renewal_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          });
+        }
+      }
+    } catch (supaErr: any) {
+      console.error('Supabase registration exception:', supaErr.message || supaErr);
     }
 
-    // 2. Primary User Creation via Prisma
+    // 3. Dual Sync via Prisma ORM if Prisma is online
     try {
-      user = await prisma.user.create({
+      const prismaUser = await prisma.user.create({
         data: {
+          id: user?.id || userId,
           name: cleanName,
           email: cleanEmail,
           password: hashedPassword,
@@ -43,11 +98,14 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         },
       });
 
+      if (!user) user = prismaUser;
+
       if (assignedRole === 'CLIENT') {
         await prisma.client.create({
           data: {
-            userId: user.id,
-            companyName: companyName || `${user.name}'s Business`,
+            id: clientId,
+            userId: prismaUser.id,
+            companyName: companyName || `${cleanName}'s Business`,
             phone: phone || '',
             address: address || '',
             renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
@@ -55,70 +113,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         });
       }
     } catch (prismaCreateErr: any) {
-      console.warn('Prisma user creation warning:', prismaCreateErr.message || prismaCreateErr);
-    }
-
-    // 3. Fallback / Direct Sync via Supabase Client
-    try {
-      // Check existing in Supabase DB
-      const { data: existingSupaUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (existingSupaUser && !user) {
-        res.status(400).json({ error: 'User with this email already exists' });
-        return;
-      }
-
-      if (!existingSupaUser) {
-        const userId = user?.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        const { data: newSupaUser } = await supabase
-          .from('users')
-          .insert({
-            id: userId,
-            name: cleanName,
-            email: cleanEmail,
-            password: hashedPassword,
-            role: assignedRole,
-          })
-          .select()
-          .single();
-
-        if (assignedRole === 'CLIENT') {
-          await supabase.from('clients').insert({
-            user_id: userId,
-            company_name: companyName || `${cleanName}'s Business`,
-            phone: phone || '',
-            address: address || '',
-            renewal_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          });
-        }
-
-        if (!user && newSupaUser) {
-          user = {
-            id: newSupaUser.id,
-            name: newSupaUser.name,
-            email: newSupaUser.email,
-            role: newSupaUser.role,
-            createdAt: newSupaUser.created_at || new Date().toISOString(),
-          };
-        }
-      }
-    } catch (supaErr: any) {
-      console.error('Supabase registration sync notice:', supaErr.message || supaErr);
+      console.warn('Prisma registration sync notice:', prismaCreateErr.message || prismaCreateErr);
     }
 
     if (!user) {
-      // Direct emergency user creation fallback
-      user = {
-        id: `usr_${Date.now()}`,
-        name: cleanName,
-        email: cleanEmail,
-        role: assignedRole,
-        createdAt: new Date().toISOString(),
-      };
+      res.status(500).json({ error: 'Failed to save registration in database. Please try again.' });
+      return;
     }
 
     const token = generateToken({
@@ -156,52 +156,54 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const cleanEmail = email.toLowerCase().trim();
     let user: any = null;
 
-    // 1. Primary User Lookup via Prisma
+    // 1. Lookup in Supabase DB
     try {
-      user = await prisma.user.findUnique({
-        where: { email: cleanEmail },
-        include: { client: true },
-      });
-    } catch (prismaErr: any) {
-      console.warn('Prisma login lookup notice:', prismaErr.message || prismaErr);
-    }
+      const { data: supaUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', cleanEmail)
+        .maybeSingle();
 
-    // 2. Direct Lookup via Supabase JS Client fallback
-    if (!user) {
-      try {
-        const { data: supaUser } = await supabase
-          .from('users')
+      if (supaUser) {
+        const { data: clientProfile } = await supabase
+          .from('clients')
           .select('*')
-          .eq('email', cleanEmail)
+          .eq('user_id', supaUser.id)
           .maybeSingle();
 
-        if (supaUser) {
-          const { data: clientProfile } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('user_id', supaUser.id)
-            .maybeSingle();
+        user = {
+          id: supaUser.id,
+          name: supaUser.name,
+          email: supaUser.email,
+          password: supaUser.password,
+          role: supaUser.role,
+          client: clientProfile || null,
+          createdAt: supaUser.created_at || new Date().toISOString(),
+        };
+      }
+    } catch (supaErr: any) {
+      console.warn('Supabase login lookup notice:', supaErr.message || supaErr);
+    }
 
-          user = {
-            id: supaUser.id,
-            name: supaUser.name,
-            email: supaUser.email,
-            password: supaUser.password,
-            role: supaUser.role,
-            client: clientProfile || null,
-            createdAt: supaUser.created_at || new Date().toISOString(),
-          };
-        }
-      } catch (supaErr: any) {
-        console.error('Supabase login lookup notice:', supaErr.message || supaErr);
+    // 2. Lookup in Prisma DB if not found in Supabase
+    if (!user) {
+      try {
+        user = await prisma.user.findUnique({
+          where: { email: cleanEmail },
+          include: { client: true },
+        });
+      } catch (prismaErr: any) {
+        console.warn('Prisma login lookup notice:', prismaErr.message || prismaErr);
       }
     }
 
-    if (!user) {
-      res.status(401).json({ error: 'Invalid email or password' });
+    // STRICT CHECK: If user does NOT exist in database, DENY ACCESS!
+    if (!user || !user.password) {
+      res.status(401).json({ error: 'Invalid email or password. User profile not found in database.' });
       return;
     }
 
+    // STRICT CHECK: Verify password hash
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       res.status(401).json({ error: 'Invalid email or password' });
@@ -242,53 +244,53 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
     let user: any = null;
 
     try {
-      user = await prisma.user.findUnique({
-        where: { id: req.user.userId },
-        include: {
-          client: {
-            include: {
-              projects: true,
-              invoices: true,
-              tickets: true,
-            },
-          },
-        },
-      });
-    } catch (prismaErr: any) {
-      console.warn('Prisma getMe lookup notice:', prismaErr.message || prismaErr);
+      const { data: supaUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', req.user.userId)
+        .maybeSingle();
+
+      if (supaUser) {
+        const { data: clientProfile } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('user_id', supaUser.id)
+          .maybeSingle();
+
+        user = {
+          id: supaUser.id,
+          name: supaUser.name,
+          email: supaUser.email,
+          role: supaUser.role,
+          client: clientProfile || null,
+          createdAt: supaUser.created_at || new Date().toISOString(),
+        };
+      }
+    } catch (supaErr: any) {
+      console.warn('Supabase getMe notice:', supaErr.message || supaErr);
     }
 
     if (!user) {
       try {
-        const { data: supaUser } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', req.user.userId)
-          .maybeSingle();
-
-        if (supaUser) {
-          const { data: clientProfile } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('user_id', supaUser.id)
-            .maybeSingle();
-
-          user = {
-            id: supaUser.id,
-            name: supaUser.name,
-            email: supaUser.email,
-            role: supaUser.role,
-            client: clientProfile || null,
-            createdAt: supaUser.created_at || new Date().toISOString(),
-          };
-        }
-      } catch (supaErr: any) {
-        console.error('Supabase getMe lookup notice:', supaErr.message || supaErr);
+        user = await prisma.user.findUnique({
+          where: { id: req.user.userId },
+          include: {
+            client: {
+              include: {
+                projects: true,
+                invoices: true,
+                tickets: true,
+              },
+            },
+          },
+        });
+      } catch (prismaErr: any) {
+        console.warn('Prisma getMe lookup notice:', prismaErr.message || prismaErr);
       }
     }
 
     if (!user) {
-      res.status(404).json({ error: 'User profile not found' });
+      res.status(404).json({ error: 'User profile not found in database' });
       return;
     }
 
@@ -303,18 +305,28 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
 export const seedDefaultAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
     const adminEmail = 'admin@platepixel.com';
+    const adminId = 'a0000000-0000-0000-0000-000000000001';
     const hashedPassword = await bcrypt.hash('Admin@123', 10);
     let admin: any = null;
 
     try {
-      const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
-      if (existingAdmin) {
-        res.status(200).json({ message: 'Default admin user already exists', email: adminEmail });
-        return;
-      }
+      await supabase.from('users').upsert({
+        id: adminId,
+        name: 'PlatePixel Admin',
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'ADMIN',
+      });
+    } catch (supaErr: any) {
+      console.error('Supabase seed admin notice:', supaErr.message || supaErr);
+    }
 
-      admin = await prisma.user.create({
-        data: {
+    try {
+      admin = await prisma.user.upsert({
+        where: { email: adminEmail },
+        update: { password: hashedPassword, role: 'ADMIN' },
+        create: {
+          id: adminId,
           name: 'PlatePixel Admin',
           email: adminEmail,
           password: hashedPassword,
@@ -323,18 +335,6 @@ export const seedDefaultAdmin = async (req: Request, res: Response): Promise<voi
       });
     } catch (prismaErr: any) {
       console.warn('Prisma seed admin notice:', prismaErr.message || prismaErr);
-    }
-
-    try {
-      await supabase.from('users').upsert({
-        id: admin?.id || 'admin_default_id',
-        name: 'PlatePixel Admin',
-        email: adminEmail,
-        password: hashedPassword,
-        role: 'ADMIN',
-      });
-    } catch (supaErr: any) {
-      console.error('Supabase seed admin notice:', supaErr.message || supaErr);
     }
 
     res.status(201).json({
