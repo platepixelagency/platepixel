@@ -42,19 +42,28 @@ This guide outlines the production deployment setup for the **PlatePixel** agenc
 
 ---
 
-## 3. Frontend Deployment (Vercel)
-1. Log into [Vercel](https://vercel.com) and click **Import Project**.
-2. Connect `https://github.com/platepixelagency/platepixel` repository.
-3. Select `client` as Root Directory.
-4. Vercel automatically detects Vite settings:
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-5. Vercel will read `client/vercel.json` and proxy `/api/*` requests to your Railway API instance seamlessly.
+## 3. Full-Stack Deployment on Vercel (Frontend + Express Serverless API)
+
+Your repository is now pre-configured to deploy **both Frontend and Express Backend API** on a single Vercel domain (e.g. `https://platepixel-zpyy.vercel.app`).
+
+### Steps to Deploy on Vercel:
+
+1. **Root Directory**:
+   - In Vercel Project Settings → **General**, set **Root Directory** to `./` (the root of the repo).
+2. **Build Settings**:
+   - **Framework Preset**: Other / Vite
+   - **Build Command**: `npm run vercel-build`
+   - **Output Directory**: `client/dist`
+3. **Environment Variables**:
+   In Vercel Project Settings → **Environment Variables**, add:
+   - `DATABASE_URL`: Your Supabase PostgreSQL URL (`postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres`)
+   - `JWT_SECRET`: `platepixel_super_secret_jwt_key_2026_huly_cosmic`
+   - `NODE_ENV`: `production`
 
 ---
 
-## 4. Post-Deployment Verification
-1. Visit your Vercel public URL (e.g., `https://platepixel.vercel.app`).
-2. Submit a lead inquiry on the Contact page.
-3. Log into `/login` with credentials (`admin@platepixel.com` / `Admin@123`) to access Admin Workspace.
-4. Verify lead intake in CRM, invoice PDF generation, project boards, and client portal workspace.
+## 4. Verification
+
+1. Visit your Vercel deployment URL (e.g. `https://platepixel-zpyy.vercel.app`).
+2. Test backend API health check at `/api/health` (`https://platepixel-zpyy.vercel.app/api/health`).
+3. Sign in to your workspace at `/login` with credentials (`admin@platepixel.com` / `Admin@123`).
