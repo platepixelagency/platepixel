@@ -22,15 +22,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const userId = crypto.randomUUID();
     const clientId = crypto.randomUUID();
 
-    // 1. Check existing user in Prisma or Supabase DB
-    try {
-      const existingPrismaUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
-      if (existingPrismaUser) {
-        res.status(400).json({ error: 'User with this email already exists' });
-        return;
-      }
-    } catch (e) {}
-
+    // 1. Check existing user in Supabase DB
     try {
       const { data: existingSupaUser } = await supabase
         .from('users')
@@ -44,11 +36,20 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       }
     } catch (e) {}
 
+    // Check existing user in Prisma DB
+    try {
+      const existingPrismaUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+      if (existingPrismaUser) {
+        res.status(400).json({ error: 'User with this email already exists' });
+        return;
+      }
+    } catch (e) {}
+
     let user: any = null;
 
-    // 2. Primary Insert via Supabase JS SDK (Guarantees UUID compatibility)
+    // 2. Primary Insert via Supabase JS SDK
     try {
-      const { data: newSupaUser, error: supaUserErr } = await supabase
+      const { error: supaUserErr } = await supabase
         .from('users')
         .insert({
           id: userId,
@@ -56,30 +57,32 @@ export const register = async (req: Request, res: Response): Promise<void> => {
           email: cleanEmail,
           password: hashedPassword,
           role: assignedRole,
-        })
-        .select()
-        .single();
+        });
 
       if (supaUserErr) {
         console.error('Supabase user registration error:', supaUserErr.message);
-      } else if (newSupaUser) {
+      } else {
         user = {
-          id: newSupaUser.id,
-          name: newSupaUser.name,
-          email: newSupaUser.email,
-          role: newSupaUser.role,
-          createdAt: newSupaUser.created_at || new Date().toISOString(),
+          id: userId,
+          name: cleanName,
+          email: cleanEmail,
+          role: assignedRole,
+          createdAt: new Date().toISOString(),
         };
 
         if (assignedRole === 'CLIENT') {
-          await supabase.from('clients').insert({
+          const { error: supaClientErr } = await supabase.from('clients').insert({
             id: clientId,
-            user_id: newSupaUser.id,
+            user_id: userId,
             company_name: companyName || `${cleanName}'s Business`,
             phone: phone || '',
             address: address || '',
             renewal_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
           });
+
+          if (supaClientErr) {
+            console.error('Supabase client registration error:', supaClientErr.message);
+          }
         }
       }
     } catch (supaErr: any) {
@@ -90,7 +93,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     try {
       const prismaUser = await prisma.user.create({
         data: {
-          id: user?.id || userId,
+          id: userId,
           name: cleanName,
           email: cleanEmail,
           password: hashedPassword,
