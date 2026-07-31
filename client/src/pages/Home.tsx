@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { CountUpNumber } from '../components/CountUpNumber';
 import { subscribeToRealtimeTable } from '../services/supabase';
+import { fetchWithAuth } from '../services/api';
 import { Footer } from '../components/Footer';
 
 export const Home: React.FC = () => {
@@ -35,12 +36,11 @@ export const Home: React.FC = () => {
   });
 
   useEffect(() => {
-    fetch('/api/catalog/hero-stats')
-      .then((res) => res.json())
+    fetchWithAuth<{ stats?: typeof heroStats }>('/catalog/hero-stats')
       .then((data) => {
         if (data.stats) setHeroStats(data.stats);
       })
-      .catch((err) => console.error('Failed to load hero stats:', err));
+      .catch((err) => console.log('Hero stats default fallbacks active:', err.message || err));
 
     // Supabase Realtime live sync for hero stats & metrics banner
     const channel = subscribeToRealtimeTable('hero_stats', (payload) => {

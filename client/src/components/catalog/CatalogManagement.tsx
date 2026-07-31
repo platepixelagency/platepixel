@@ -101,18 +101,19 @@ export const CatalogManagement: React.FC = () => {
   const loadCatalogData = async () => {
     try {
       setLoading(true);
-      const [servRes, priceRes, portRes, heroRes, settingsRes] = await Promise.all([
-        fetch('/api/catalog/services').then((r) => r.json()),
-        fetch('/api/catalog/pricing').then((r) => r.json()),
-        fetch('/api/catalog/portfolio').then((r) => r.json()),
-        fetch('/api/catalog/hero-stats').then((r) => r.json()),
-        fetch('/api/catalog/site-settings').then((r) => r.json()),
+      const [servRes, priceRes, portRes, heroRes, settingsRes] = await Promise.allSettled([
+        fetchWithAuth<{ services?: any[] }>('/catalog/services'),
+        fetchWithAuth<{ pricing?: any[] }>('/catalog/pricing'),
+        fetchWithAuth<{ portfolio?: any[] }>('/catalog/portfolio'),
+        fetchWithAuth<{ stats?: any }>('/catalog/hero-stats'),
+        fetchWithAuth<{ settings?: any }>('/catalog/site-settings'),
       ]);
-      setServices(servRes.services || []);
-      setPricing(priceRes.pricing || []);
-      setPortfolio(portRes.portfolio || []);
-      if (heroRes.stats) setHeroForm(heroRes.stats);
-      if (settingsRes?.settings) setSiteSettingsForm(settingsRes.settings);
+
+      if (servRes.status === 'fulfilled' && servRes.value?.services) setServices(servRes.value.services);
+      if (priceRes.status === 'fulfilled' && priceRes.value?.pricing) setPricing(priceRes.value.pricing);
+      if (portRes.status === 'fulfilled' && portRes.value?.portfolio) setPortfolio(portRes.value.portfolio);
+      if (heroRes.status === 'fulfilled' && heroRes.value?.stats) setHeroForm(heroRes.value.stats);
+      if (settingsRes.status === 'fulfilled' && settingsRes.value?.settings) setSiteSettingsForm(settingsRes.value.settings);
     } catch (err) {
       console.error('Failed to load catalog data:', err);
     } finally {

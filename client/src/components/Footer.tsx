@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Phone, ArrowRight, Globe, Facebook, Instagram, Github, MessageCircle } from 'lucide-react';
 import { subscribeToRealtimeTable } from '../services/supabase';
+import { fetchWithAuth } from '../services/api';
 
 interface SiteSettings {
   supportEmail: string;
@@ -39,12 +40,11 @@ export const Footer: React.FC = () => {
   });
 
   useEffect(() => {
-    fetch('/api/catalog/site-settings')
-      .then((r) => r.json())
-      .then((res: any) => {
+    fetchWithAuth<{ settings?: SiteSettings }>('/catalog/site-settings')
+      .then((res) => {
         if (res?.settings) setSettings(res.settings);
       })
-      .catch((err: any) => console.log('Site settings default fallbacks active:', err));
+      .catch((err: any) => console.log('Site settings default fallbacks active:', err.message || err));
 
     // Supabase Realtime live sync
     const channel = subscribeToRealtimeTable('site_settings', (payload) => {

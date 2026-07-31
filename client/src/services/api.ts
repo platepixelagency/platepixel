@@ -1,4 +1,4 @@
-const API_BASE_URL = '/api';
+const API_BASE_URL = (((import.meta as any).env?.VITE_API_URL as string) || '/api').replace(/\/$/, '');
 
 export const getAuthToken = (): string | null => {
   return localStorage.getItem('platepixel_token');
@@ -23,21 +23,34 @@ export async function fetchWithAuth<T>(endpoint: string, options: RequestInit = 
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const targetUrl = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${formattedEndpoint}`;
+
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    response = await fetch(targetUrl, {
       ...options,
       headers,
     });
   } catch (netErr: any) {
-    throw new Error('Backend server is offline or unreachable (port 5000). Please ensure backend server is running.');
+    throw new Error('Backend server is offline or unreachable. Please ensure backend server is running.');
   }
 
   let data: any = {};
-  try {
-    data = await response.json();
-  } catch (e) {
-    // Non-JSON response fallback
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    try {
+      data = await response.json();
+    } catch (e) {
+      data = {};
+    }
+  } else {
+    try {
+      const text = await response.text();
+      data = { message: text.trim() };
+    } catch (e) {
+      data = {};
+    }
   }
 
   if (!response.ok) {

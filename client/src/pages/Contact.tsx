@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Globe
 } from 'lucide-react';
+import { fetchWithAuth } from '../services/api';
 import { Footer } from '../components/Footer';
 
 export const Contact: React.FC = () => {
@@ -44,9 +45,8 @@ export const Contact: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/leads', {
+      const data = await fetchWithAuth<{ lead: any }>('/leads', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           businessName,
@@ -58,12 +58,6 @@ export const Contact: React.FC = () => {
           message,
         }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit lead form');
-      }
 
       setSuccessLead(data.lead);
     } catch (err: any) {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { fetchWithAuth } from '../services/api';
 import { LeadCRM } from '../components/crm/LeadCRM';
 import { ClientManagement } from '../components/clients/ClientManagement';
 import { ProjectManagement } from '../components/projects/ProjectManagement';
@@ -45,8 +46,7 @@ export const Dashboard: React.FC = () => {
   const [loadingHealth, setLoadingHealth] = useState(true);
 
   useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json())
+    fetchWithAuth<any>('/health')
       .then((data) => {
         setHealth(data);
         setLoadingHealth(false);
