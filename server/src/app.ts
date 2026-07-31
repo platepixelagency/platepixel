@@ -21,38 +21,41 @@ app.use(express.json());
 
 // Health Check API
 app.get(['/api/health', '/health', '/api'], async (_req, res) => {
+  let userCount = 0, leadCount = 0, clientCount = 0, projectCount = 0, invoiceCount = 0, ticketCount = 0, serviceCount = 0, pricingCount = 0, portfolioCount = 0;
+  let dbStatus = 'connected';
+  let dbError = undefined;
+
   try {
-    const userCount = await prisma.user.count();
-    const leadCount = await prisma.lead.count();
-    const clientCount = await prisma.client.count();
-    const projectCount = await prisma.project.count();
-    const invoiceCount = await prisma.invoice.count();
-    const ticketCount = await prisma.ticket.count();
-    const serviceCount = await prisma.agencyService.count();
-    const pricingCount = await prisma.agencyPricing.count();
-    const portfolioCount = await prisma.agencyPortfolio.count();
-    res.status(200).json({
-      status: 'healthy',
-      platform: 'PlatePixel Agency Management API (Vercel Serverless)',
-      database: 'connected',
-      userCount,
-      leadCount,
-      clientCount,
-      projectCount,
-      invoiceCount,
-      ticketCount,
-      serviceCount,
-      pricingCount,
-      portfolioCount,
-      timestamp: new Date().toISOString(),
-    });
+    userCount = await prisma.user.count();
+    leadCount = await prisma.lead.count();
+    clientCount = await prisma.client.count();
+    projectCount = await prisma.project.count();
+    invoiceCount = await prisma.invoice.count();
+    ticketCount = await prisma.ticket.count();
+    serviceCount = await prisma.agencyService.count();
+    pricingCount = await prisma.agencyPricing.count();
+    portfolioCount = await prisma.agencyPortfolio.count();
   } catch (error: any) {
-    res.status(500).json({
-      status: 'unhealthy',
-      database: 'disconnected',
-      error: error.message,
-    });
+    dbStatus = 'disconnected';
+    dbError = error.message;
   }
+
+  res.status(200).json({
+    status: dbStatus === 'connected' ? 'healthy' : 'degraded',
+    platform: 'PlatePixel Agency Management API',
+    database: dbStatus,
+    error: dbError,
+    userCount,
+    leadCount,
+    clientCount,
+    projectCount,
+    invoiceCount,
+    ticketCount,
+    serviceCount,
+    pricingCount,
+    portfolioCount,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // API Routes
