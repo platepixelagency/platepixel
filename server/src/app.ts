@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 // Health Check API
-app.get('/api/health', async (_req, res) => {
+app.get(['/api/health', '/health'], async (_req, res) => {
   try {
     const userCount = await prisma.user.count();
     const leadCount = await prisma.lead.count();
@@ -56,15 +56,15 @@ app.get('/api/health', async (_req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/leads', leadRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/portal', clientPortalRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/automation', automationRoutes);
-app.use('/api/catalog', catalogRoutes);
+app.use(['/api/auth', '/auth'], authRoutes);
+app.use(['/api/leads', '/leads'], leadRoutes);
+app.use(['/api/clients', '/clients'], clientRoutes);
+app.use(['/api/projects', '/projects'], projectRoutes);
+app.use(['/api/invoices', '/invoices'], invoiceRoutes);
+app.use(['/api/portal', '/portal'], clientPortalRoutes);
+app.use(['/api/tickets', '/tickets'], ticketRoutes);
+app.use(['/api/automation', '/automation'], automationRoutes);
+app.use(['/api/catalog', '/catalog'], catalogRoutes);
 
 // Global Error Handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
