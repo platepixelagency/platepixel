@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Client, User } from '../../types';
 import { fetchWithAuth } from '../../services/api';
+import { supabase } from '../../services/supabase';
 import { 
   Building, 
   Plus, 
@@ -79,8 +80,87 @@ export const ClientManagement: React.FC = () => {
   const loadClients = async () => {
     try {
       setLoading(true);
-      const res = await fetchWithAuth<{ clients: ExtendedClient[] }>('/clients');
-      setClients(res.clients);
+      let loadedClients: ExtendedClient[] = [];
+
+      // 1. Primary API fetch
+      try {
+        const res = await fetchWithAuth<{ clients: ExtendedClient[] }>('/clients');
+        if (res.clients && res.clients.length > 0) {
+          loadedClients = res.clients;
+        }
+      } catch (e) {}
+
+      // 2. Direct Supabase DB Fallback
+      if (loadedClients.length === 0) {
+        try {
+          const { data: supaClients } = await supabase
+            .from('clients')
+            .select('*, user:users(*)');
+
+          const { data: portalClients } = await supabase
+            .from('portal_clients')
+            .select('*');
+
+          const combinedClientsMap = new Map<string, any>();
+
+          if (supaClients && supaClients.length > 0) {
+            supaClients.forEach((c: any) => {
+              combinedClientsMap.set(c.id, {
+                id: c.id,
+                userId: c.user_id,
+                companyName: c.company_name,
+                phone: c.phone || '',
+                address: c.address || '',
+                renewalDate: c.renewal_date,
+                user: c.user || { name: c.company_name, email: 'client@agency.com' },
+                _count: { projects: 0, invoices: 0, tickets: 0, documents: 0 },
+              });
+            });
+          }
+
+          if (portalClients && portalClients.length > 0) {
+            portalClients.forEach((pc: any) => {
+              if (!combinedClientsMap.has(pc.id)) {
+                combinedClientsMap.set(pc.id, {
+                  id: pc.id,
+                  userId: pc.id,
+                  companyName: pc.company_name || `${pc.name}'s Business`,
+                  phone: pc.phone || '',
+                  address: 'PlatePixel Client Workspace',
+                  renewalDate: new Date(Date.now() + 365 * 86400000).toISOString(),
+                  user: { id: pc.id, name: pc.name, email: pc.email, role: pc.role || 'CLIENT' },
+                  _count: { projects: 0, invoices: 0, tickets: 0, documents: 0 },
+                });
+              }
+            });
+          }
+
+          const clientList = Array.from(combinedClientsMap.values());
+
+          // Fetch counts for each client
+          for (const client of clientList) {
+            try {
+              const { count: projCount } = await supabase.from('projects').select('*', { count: 'exact', head: true }).eq('client_id', client.id);
+              const { count: invCount } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('client_id', client.id);
+              const { count: tickCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('client_id', client.id);
+              const { count: docCount } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('client_id', client.id);
+
+              client._count = {
+                projects: projCount || 0,
+                invoices: invCount || 0,
+                tickets: tickCount || 0,
+                documents: docCount || 0,
+              };
+            } catch (e) {}
+          }
+
+          loadedClients = clientList;
+        } catch (err: any) {
+          console.error('Supabase direct clients fetch notice:', err);
+        }
+      }
+
+      setClients(loadedClients);
     } catch (err: any) {
       console.error('Failed to load clients:', err);
     } finally {
