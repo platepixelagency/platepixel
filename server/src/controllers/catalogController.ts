@@ -14,6 +14,22 @@ export let currentHeroStats = {
 };
 
 export const getHeroStats = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const { data } = await supabase.from('hero_stats').select('*').eq('id', 'main').maybeSingle();
+    if (data) {
+      currentHeroStats = {
+        clientProjects: data.clientProjects || data.client_projects || currentHeroStats.clientProjects,
+        leadCrmWon: data.leadCrmWon || data.lead_crm_won || currentHeroStats.leadCrmWon,
+        maintenanceRenewals: data.maintenanceRenewals || data.maintenance_renewals || currentHeroStats.maintenanceRenewals,
+        leadsGenerated: data.leadsGenerated || data.leads_generated || currentHeroStats.leadsGenerated,
+        activeRetainers: data.activeRetainers || data.active_retainers || currentHeroStats.activeRetainers,
+        uptimeSecurity: data.uptimeSecurity || data.uptime_security || currentHeroStats.uptimeSecurity,
+        onTimeDelivery: data.onTimeDelivery || data.on_time_delivery || currentHeroStats.onTimeDelivery,
+      };
+    }
+  } catch (err) {
+    // Ignore read error
+  }
   res.status(200).json({ stats: currentHeroStats });
 };
 
@@ -28,7 +44,6 @@ export const updateHeroStats = async (req: Request, res: Response): Promise<void
     if (uptimeSecurity) currentHeroStats.uptimeSecurity = uptimeSecurity;
     if (onTimeDelivery) currentHeroStats.onTimeDelivery = onTimeDelivery;
 
-    // Sync into Supabase DB for Realtime broadcast across all active clients
     try {
       await supabase.from('hero_stats').upsert({ id: 'main', ...currentHeroStats });
     } catch (supaErr: any) {
@@ -60,6 +75,14 @@ export let currentSiteSettings = {
 };
 
 export const getSiteSettings = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const { data } = await supabase.from('site_settings').select('*').eq('id', 'main').maybeSingle();
+    if (data) {
+      currentSiteSettings = { ...currentSiteSettings, ...data };
+    }
+  } catch (err) {
+    // Ignore read error
+  }
   res.status(200).json({ settings: currentSiteSettings });
 };
 
@@ -90,7 +113,6 @@ export const updateSiteSettings = async (req: Request, res: Response): Promise<v
     if (whatsappVisible !== undefined) currentSiteSettings.whatsappVisible = whatsappVisible;
     if (showSocialBar !== undefined) currentSiteSettings.showSocialBar = showSocialBar;
 
-    // Sync into Supabase DB for Realtime broadcast across all active clients
     try {
       await supabase.from('site_settings').upsert({ id: 'main', ...currentSiteSettings });
     } catch (supaErr: any) {
@@ -196,11 +218,27 @@ const DEFAULT_PORTFOLIO = [
 // --- SERVICES CRUD ---
 export const getServices = async (_req: Request, res: Response): Promise<void> => {
   try {
-    let services = await prisma.agencyService.findMany({ orderBy: { createdAt: 'desc' } });
+    let services: any[] = [];
+    try {
+      services = await prisma.agencyService.findMany({ orderBy: { createdAt: 'desc' } });
+    } catch (e) {
+      // Prisma error fallback
+    }
 
     if (services.length === 0) {
-      await prisma.agencyService.createMany({ data: DEFAULT_SERVICES });
-      services = await prisma.agencyService.findMany({ orderBy: { createdAt: 'desc' } });
+      const { data } = await supabase.from('agency_services').select('*').order('created_at', { ascending: false });
+      if (data && data.length > 0) {
+        services = data.map((s) => ({
+          id: s.id,
+          title: s.title,
+          category: s.category,
+          price: s.price,
+          description: s.description,
+          features: s.features,
+          isPopular: s.is_popular || s.isPopular || false,
+          createdAt: s.created_at || s.createdAt,
+        }));
+      }
     }
 
     res.status(200).json({ services });
@@ -212,16 +250,49 @@ export const getServices = async (_req: Request, res: Response): Promise<void> =
 export const createService = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, category, price, description, features, isPopular } = req.body;
-    const service = await prisma.agencyService.create({
-      data: {
+    let service: any = null;
+
+    try {
+      service = await prisma.agencyService.create({
+        data: {
+          title: title.trim(),
+          category: category || 'Web Development',
+          price: price || '₹14,999',
+          description: description || '',
+          features: Array.isArray(features) ? features.join(',') : features || '',
+          isPopular: !!isPopular,
+        },
+      });
+    } catch (prismaErr) {
+      console.warn('Prisma createService notice:', prismaErr);
+    }
+
+    try {
+      const { data: supaService } = await supabase.from('agency_services').insert({
+        id: service?.id,
         title: title.trim(),
         category: category || 'Web Development',
-        price: price || '$499',
+        price: price || '₹14,999',
         description: description || '',
         features: Array.isArray(features) ? features.join(',') : features || '',
-        isPopular: !!isPopular,
-      },
-    });
+        is_popular: !!isPopular,
+      }).select().single();
+
+      if (!service && supaService) {
+        service = {
+          id: supaService.id,
+          title: supaService.title,
+          category: supaService.category,
+          price: supaService.price,
+          description: supaService.description,
+          features: supaService.features,
+          isPopular: supaService.is_popular,
+        };
+      }
+    } catch (supaErr) {
+      console.error('Supabase createService notice:', supaErr);
+    }
+
     res.status(201).json({ message: 'Service created successfully', service });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to create service' });
@@ -233,18 +304,32 @@ export const updateService = async (req: Request, res: Response): Promise<void> 
     const { id } = req.params;
     const serviceId = Array.isArray(id) ? id[0] : id;
     const { title, category, price, description, features, isPopular } = req.body;
+    let service: any = null;
 
-    const service = await prisma.agencyService.update({
-      where: { id: serviceId },
-      data: {
+    try {
+      service = await prisma.agencyService.update({
+        where: { id: serviceId },
+        data: {
+          title: title.trim(),
+          category: category || 'Web Development',
+          price: price || '₹14,999',
+          description: description || '',
+          features: Array.isArray(features) ? features.join(',') : features || '',
+          isPopular: !!isPopular,
+        },
+      });
+    } catch (e) {}
+
+    try {
+      await supabase.from('agency_services').update({
         title: title.trim(),
         category: category || 'Web Development',
-        price: price || '$499',
+        price: price || '₹14,999',
         description: description || '',
         features: Array.isArray(features) ? features.join(',') : features || '',
-        isPopular: !!isPopular,
-      },
-    });
+        is_popular: !!isPopular,
+      }).eq('id', serviceId);
+    } catch (e) {}
 
     res.status(200).json({ message: 'Service updated successfully', service });
   } catch (error: any) {
@@ -256,7 +341,8 @@ export const deleteService = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     const serviceId = Array.isArray(id) ? id[0] : id;
-    await prisma.agencyService.delete({ where: { id: serviceId } });
+    try { await prisma.agencyService.delete({ where: { id: serviceId } }); } catch (e) {}
+    try { await supabase.from('agency_services').delete().eq('id', serviceId); } catch (e) {}
     res.status(200).json({ message: 'Service deleted' });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to delete service' });
@@ -266,11 +352,25 @@ export const deleteService = async (req: Request, res: Response): Promise<void> 
 // --- PRICING CRUD ---
 export const getPricing = async (_req: Request, res: Response): Promise<void> => {
   try {
-    let pricing = await prisma.agencyPricing.findMany({ orderBy: { createdAt: 'desc' } });
+    let pricing: any[] = [];
+    try {
+      pricing = await prisma.agencyPricing.findMany({ orderBy: { createdAt: 'desc' } });
+    } catch (e) {}
 
     if (pricing.length === 0) {
-      await prisma.agencyPricing.createMany({ data: DEFAULT_PRICING });
-      pricing = await prisma.agencyPricing.findMany({ orderBy: { createdAt: 'desc' } });
+      const { data } = await supabase.from('agency_pricing').select('*').order('created_at', { ascending: false });
+      if (data && data.length > 0) {
+        pricing = data.map((p) => ({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          period: p.period,
+          description: p.description,
+          features: p.features,
+          highlighted: p.highlighted || false,
+          createdAt: p.created_at || p.createdAt,
+        }));
+      }
     }
 
     res.status(200).json({ pricing });
@@ -282,16 +382,35 @@ export const getPricing = async (_req: Request, res: Response): Promise<void> =>
 export const createPricing = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, price, period, description, features, highlighted } = req.body;
-    const plan = await prisma.agencyPricing.create({
-      data: {
+    let plan: any = null;
+
+    try {
+      plan = await prisma.agencyPricing.create({
+        data: {
+          title: title.trim(),
+          price: price || '₹14,999',
+          period: period || 'one-time',
+          description: description || '',
+          features: Array.isArray(features) ? features.join(',') : features || '',
+          highlighted: !!highlighted,
+        },
+      });
+    } catch (e) {}
+
+    try {
+      const { data: supaPlan } = await supabase.from('agency_pricing').insert({
+        id: plan?.id,
         title: title.trim(),
-        price: price || '$499',
+        price: price || '₹14,999',
         period: period || 'one-time',
         description: description || '',
         features: Array.isArray(features) ? features.join(',') : features || '',
         highlighted: !!highlighted,
-      },
-    });
+      }).select().single();
+
+      if (!plan && supaPlan) plan = supaPlan;
+    } catch (e) {}
+
     res.status(201).json({ message: 'Pricing plan created', plan });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to create pricing plan' });
@@ -303,18 +422,32 @@ export const updatePricing = async (req: Request, res: Response): Promise<void> 
     const { id } = req.params;
     const planId = Array.isArray(id) ? id[0] : id;
     const { title, price, period, description, features, highlighted } = req.body;
+    let plan: any = null;
 
-    const plan = await prisma.agencyPricing.update({
-      where: { id: planId },
-      data: {
+    try {
+      plan = await prisma.agencyPricing.update({
+        where: { id: planId },
+        data: {
+          title: title.trim(),
+          price: price || '₹14,999',
+          period: period || 'one-time',
+          description: description || '',
+          features: Array.isArray(features) ? features.join(',') : features || '',
+          highlighted: !!highlighted,
+        },
+      });
+    } catch (e) {}
+
+    try {
+      await supabase.from('agency_pricing').update({
         title: title.trim(),
-        price: price || '$499',
+        price: price || '₹14,999',
         period: period || 'one-time',
         description: description || '',
         features: Array.isArray(features) ? features.join(',') : features || '',
         highlighted: !!highlighted,
-      },
-    });
+      }).eq('id', planId);
+    } catch (e) {}
 
     res.status(200).json({ message: 'Pricing plan updated', plan });
   } catch (error: any) {
@@ -326,7 +459,8 @@ export const deletePricing = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     const planId = Array.isArray(id) ? id[0] : id;
-    await prisma.agencyPricing.delete({ where: { id: planId } });
+    try { await prisma.agencyPricing.delete({ where: { id: planId } }); } catch (e) {}
+    try { await supabase.from('agency_pricing').delete().eq('id', planId); } catch (e) {}
     res.status(200).json({ message: 'Pricing plan deleted' });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to delete pricing plan' });
@@ -336,11 +470,25 @@ export const deletePricing = async (req: Request, res: Response): Promise<void> 
 // --- PORTFOLIO CRUD ---
 export const getPortfolio = async (_req: Request, res: Response): Promise<void> => {
   try {
-    let portfolio = await prisma.agencyPortfolio.findMany({ orderBy: { createdAt: 'desc' } });
+    let portfolio: any[] = [];
+    try {
+      portfolio = await prisma.agencyPortfolio.findMany({ orderBy: { createdAt: 'desc' } });
+    } catch (e) {}
 
     if (portfolio.length === 0) {
-      await prisma.agencyPortfolio.createMany({ data: DEFAULT_PORTFOLIO });
-      portfolio = await prisma.agencyPortfolio.findMany({ orderBy: { createdAt: 'desc' } });
+      const { data } = await supabase.from('agency_portfolio').select('*').order('created_at', { ascending: false });
+      if (data && data.length > 0) {
+        portfolio = data.map((p) => ({
+          id: p.id,
+          title: p.title,
+          category: p.category,
+          clientName: p.client_name || p.clientName,
+          imageUrl: p.image_url || p.imageUrl,
+          liveUrl: p.live_url || p.liveUrl,
+          tags: p.tags,
+          createdAt: p.created_at || p.createdAt,
+        }));
+      }
     }
 
     res.status(200).json({ portfolio });
@@ -352,16 +500,35 @@ export const getPortfolio = async (_req: Request, res: Response): Promise<void> 
 export const createPortfolio = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, category, clientName, imageUrl, liveUrl, tags } = req.body;
-    const project = await prisma.agencyPortfolio.create({
-      data: {
+    let project: any = null;
+
+    try {
+      project = await prisma.agencyPortfolio.create({
+        data: {
+          title: title.trim(),
+          category: category || 'Web Application',
+          clientName: clientName || 'Client Project',
+          imageUrl: imageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
+          liveUrl: liveUrl || '#',
+          tags: Array.isArray(tags) ? tags.join(',') : tags || '',
+        },
+      });
+    } catch (e) {}
+
+    try {
+      const { data: supaProj } = await supabase.from('agency_portfolio').insert({
+        id: project?.id,
         title: title.trim(),
         category: category || 'Web Application',
-        clientName: clientName || 'Client Project',
-        imageUrl: imageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
-        liveUrl: liveUrl || '#',
+        client_name: clientName || 'Client Project',
+        image_url: imageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
+        live_url: liveUrl || '#',
         tags: Array.isArray(tags) ? tags.join(',') : tags || '',
-      },
-    });
+      }).select().single();
+
+      if (!project && supaProj) project = supaProj;
+    } catch (e) {}
+
     res.status(201).json({ message: 'Portfolio item created', project });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to create portfolio item' });
@@ -373,18 +540,32 @@ export const updatePortfolio = async (req: Request, res: Response): Promise<void
     const { id } = req.params;
     const projectId = Array.isArray(id) ? id[0] : id;
     const { title, category, clientName, imageUrl, liveUrl, tags } = req.body;
+    let project: any = null;
 
-    const project = await prisma.agencyPortfolio.update({
-      where: { id: projectId },
-      data: {
+    try {
+      project = await prisma.agencyPortfolio.update({
+        where: { id: projectId },
+        data: {
+          title: title.trim(),
+          category: category || 'Web Application',
+          clientName: clientName || 'Client Project',
+          imageUrl: imageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
+          liveUrl: liveUrl || '#',
+          tags: Array.isArray(tags) ? tags.join(',') : tags || '',
+        },
+      });
+    } catch (e) {}
+
+    try {
+      await supabase.from('agency_portfolio').update({
         title: title.trim(),
         category: category || 'Web Application',
-        clientName: clientName || 'Client Project',
-        imageUrl: imageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
-        liveUrl: liveUrl || '#',
+        client_name: clientName || 'Client Project',
+        image_url: imageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
+        live_url: liveUrl || '#',
         tags: Array.isArray(tags) ? tags.join(',') : tags || '',
-      },
-    });
+      }).eq('id', projectId);
+    } catch (e) {}
 
     res.status(200).json({ message: 'Portfolio item updated', project });
   } catch (error: any) {
@@ -396,7 +577,8 @@ export const deletePortfolio = async (req: Request, res: Response): Promise<void
   try {
     const { id } = req.params;
     const projectId = Array.isArray(id) ? id[0] : id;
-    await prisma.agencyPortfolio.delete({ where: { id: projectId } });
+    try { await prisma.agencyPortfolio.delete({ where: { id: projectId } }); } catch (e) {}
+    try { await supabase.from('agency_portfolio').delete().eq('id', projectId); } catch (e) {}
     res.status(200).json({ message: 'Portfolio item deleted' });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to delete portfolio item' });
