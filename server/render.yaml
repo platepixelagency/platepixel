@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: platepixel-backend
+    env: node
+    rootDir: server
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        value: platepixel_super_secret_jwt_key_2026_huly_cosmic
