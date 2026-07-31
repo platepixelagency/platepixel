@@ -1,0 +1,11 @@
+{
+  "name": "platepixel-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "vercel-build": "cd server && npx prisma generate && cd ../client && npm run build",
+    "build": "cd server && npx prisma generate && cd ../client && npm run build",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev"
+  }
+}

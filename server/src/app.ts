@@ -1,0 +1,75 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes.js';
+import leadRoutes from './routes/leadRoutes.js';
+import clientRoutes from './routes/clientRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js';
+import clientPortalRoutes from './routes/clientPortalRoutes.js';
+import ticketRoutes from './routes/ticketRoutes.js';
+import automationRoutes from './routes/automationRoutes.js';
+import catalogRoutes from './routes/catalogRoutes.js';
+import { prisma } from './prisma.js';
+
+dotenv.config();
+
+export const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Health Check API
+app.get('/api/health', async (_req, res) => {
+  try {
+    const userCount = await prisma.user.count();
+    const leadCount = await prisma.lead.count();
+    const clientCount = await prisma.client.count();
+    const projectCount = await prisma.project.count();
+    const invoiceCount = await prisma.invoice.count();
+    const ticketCount = await prisma.ticket.count();
+    const serviceCount = await prisma.agencyService.count();
+    const pricingCount = await prisma.agencyPricing.count();
+    const portfolioCount = await prisma.agencyPortfolio.count();
+    res.status(200).json({
+      status: 'healthy',
+      platform: 'PlatePixel Agency Management API (Vercel Serverless)',
+      database: 'connected',
+      userCount,
+      leadCount,
+      clientCount,
+      projectCount,
+      invoiceCount,
+      ticketCount,
+      serviceCount,
+      pricingCount,
+      portfolioCount,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      status: 'unhealthy',
+      database: 'disconnected',
+      error: error.message,
+    });
+  }
+});
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/leads', leadRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/portal', clientPortalRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/automation', automationRoutes);
+app.use('/api/catalog', catalogRoutes);
+
+// Global Error Handler
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('Unhandled Server Error:', err);
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
+
+export default app;
