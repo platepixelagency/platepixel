@@ -1,5 +1,6 @@
 import { Response, Request } from 'express';
 import { prisma } from '../prisma.js';
+import { supabase } from '../supabase.js';
 
 // In-memory / dynamic Hero Stats & Metrics Banner state
 export let currentHeroStats = {
@@ -26,6 +27,13 @@ export const updateHeroStats = async (req: Request, res: Response): Promise<void
     if (activeRetainers) currentHeroStats.activeRetainers = activeRetainers;
     if (uptimeSecurity) currentHeroStats.uptimeSecurity = uptimeSecurity;
     if (onTimeDelivery) currentHeroStats.onTimeDelivery = onTimeDelivery;
+
+    // Sync into Supabase DB for Realtime broadcast across all active clients
+    try {
+      await supabase.from('hero_stats').upsert({ id: 'main', ...currentHeroStats });
+    } catch (supaErr: any) {
+      console.error('Supabase hero_stats sync notice:', supaErr);
+    }
 
     res.status(200).json({ message: 'Hero banner stats & metrics updated successfully', stats: currentHeroStats });
   } catch (error: any) {
@@ -81,6 +89,13 @@ export const updateSiteSettings = async (req: Request, res: Response): Promise<v
     if (whatsappUrl !== undefined) currentSiteSettings.whatsappUrl = whatsappUrl;
     if (whatsappVisible !== undefined) currentSiteSettings.whatsappVisible = whatsappVisible;
     if (showSocialBar !== undefined) currentSiteSettings.showSocialBar = showSocialBar;
+
+    // Sync into Supabase DB for Realtime broadcast across all active clients
+    try {
+      await supabase.from('site_settings').upsert({ id: 'main', ...currentSiteSettings });
+    } catch (supaErr: any) {
+      console.error('Supabase site_settings sync notice:', supaErr);
+    }
 
     res.status(200).json({ message: 'Site contact & social settings updated successfully', settings: currentSiteSettings });
   } catch (error: any) {
