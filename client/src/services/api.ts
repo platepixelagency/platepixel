@@ -23,15 +23,26 @@ export async function fetchWithAuth<T>(endpoint: string, options: RequestInit = 
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (netErr: any) {
+    throw new Error('Backend server is offline or unreachable (port 5000). Please ensure backend server is running.');
+  }
 
-  const data = await response.json();
+  let data: any = {};
+  try {
+    data = await response.json();
+  } catch (e) {
+    // Non-JSON response fallback
+  }
 
   if (!response.ok) {
-    throw new Error(data.error || 'API Request failed');
+    const errorMsg = data.error || data.message || `API Error (${response.status}: ${response.statusText || 'Server Error'})`;
+    throw new Error(errorMsg);
   }
 
   return data as T;

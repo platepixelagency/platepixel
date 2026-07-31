@@ -16,6 +16,7 @@ export const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSeedMessage('');
     setLoading(true);
 
     try {
@@ -30,6 +31,8 @@ export const Login: React.FC = () => {
 
   const handleQuickSeedAdmin = async () => {
     try {
+      setError('');
+      setSeedMessage('');
       setLoading(true);
       await seedAdmin();
       setEmail('admin@platepixel.com');
