@@ -1,4 +1,5 @@
-const API_BASE_URL = (((import.meta as any).env?.VITE_API_URL as string) || '/api').replace(/\/$/, '');
+const RAW_URL = (((import.meta as any).env?.VITE_API_URL as string) || '').trim().replace(/\/$/, '');
+const API_BASE_URL = RAW_URL ? (RAW_URL.endsWith('/api') ? RAW_URL : `${RAW_URL}/api`) : '/api';
 
 export const getAuthToken = (): string | null => {
   return localStorage.getItem('platepixel_token');
