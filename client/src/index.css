@@ -59,6 +59,26 @@ body {
   transform: translateY(-6px) rotateX(2deg) scale(1.01);
 }
 
+/* Universal Ultra-Fast 1-Click Smooth Responsive Buttons */
+button, input[type="submit"], .btn-pill-primary, .btn-pill-secondary {
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0.1, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  will-change: transform, box-shadow;
+}
+
+button:active, input[type="submit"]:active, .btn-pill-primary:active, .btn-pill-secondary:active {
+  transform: scale(0.96) translateY(1px) !important;
+  box-shadow: 0 0 12px rgba(86, 131, 218, 0.4) !important;
+}
+
+button:disabled, input[type="submit"]:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
 /* Pill Button Styles */
 .btn-pill-primary {
   background-color: #5683da;
@@ -68,7 +88,6 @@ body {
   font-weight: 500;
   font-size: 14px;
   letter-spacing: -0.01em;
-  transition: all 0.2s ease;
   box-shadow: 0 0 15px rgba(86, 131, 218, 0.3);
 }
 
@@ -86,7 +105,6 @@ body {
   padding: 10px 24px;
   font-weight: 500;
   font-size: 14px;
-  transition: all 0.2s ease;
 }
 
 .btn-pill-secondary:hover {

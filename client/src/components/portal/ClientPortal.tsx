@@ -127,8 +127,20 @@ export const ClientPortal: React.FC = () => {
 
   if (!data) {
     return (
-      <div className="huly-card p-8 text-center text-red-400">
-        Client profile not found. Please contact agency support.
+      <div className="huly-card p-10 text-center max-w-lg mx-auto">
+        <div className="w-12 h-12 rounded-full bg-[#5683da]/20 border border-[#5683da] flex items-center justify-center mx-auto mb-4 text-[#5683da]">
+          <Building className="w-6 h-6" />
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2">Setting Up Your Client Workspace</h3>
+        <p className="text-sm text-[#95979e] mb-6">
+          Your client portal workspace is ready to be initialized. Click below to enter your workspace instantly.
+        </p>
+        <button
+          onClick={() => loadPortalData()}
+          className="btn-pill-primary text-sm py-2.5 px-6"
+        >
+          Initialize Workspace Now
+        </button>
       </div>
     );
   }
