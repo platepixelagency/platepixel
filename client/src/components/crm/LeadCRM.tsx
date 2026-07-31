@@ -47,6 +47,16 @@ export const LeadCRM: React.FC = () => {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [dbServices, setDbServices] = useState<any[]>([]);
+
+  const loadServices = async () => {
+    try {
+      const res = await fetchWithAuth<{ services: any[] }>('/catalog/services');
+      if (res.services && res.services.length > 0) {
+        setDbServices(res.services);
+      }
+    } catch (e) {}
+  };
 
   const loadLeads = async () => {
     try {
@@ -62,8 +72,13 @@ export const LeadCRM: React.FC = () => {
 
   useEffect(() => {
     loadLeads();
-    const channel = subscribeToRealtimeTable('leads', () => loadLeads());
-    return () => { channel.unsubscribe(); };
+    loadServices();
+    const leadChannel = subscribeToRealtimeTable('leads', () => loadLeads());
+    const serviceChannel = subscribeToRealtimeTable('agency_services', () => loadServices());
+    return () => {
+      leadChannel.unsubscribe();
+      serviceChannel.unsubscribe();
+    };
   }, []);
 
   const handleCreateLead = async (e: React.FormEvent) => {
@@ -542,11 +557,20 @@ export const LeadCRM: React.FC = () => {
                   onChange={(e) => setNewLead({ ...newLead, service: e.target.value })}
                   className="huly-input"
                 >
-                  <option value="Business Website">Business Website (₹14,999)</option>
-                  <option value="Restaurant Website & QR Menu">Restaurant Website & QR Menu (₹24,999)</option>
-                  <option value="Wedding Website">Wedding Website (₹19,999)</option>
-                  <option value="Growth Retainer (₹2,999/mo)">Growth Retainer (₹2,999/mo)</option>
-                  <option value="Custom Web App (₹49,999+)">Custom Web App (₹49,999+)</option>
+                  {dbServices.length > 0 ? (
+                    dbServices.map((s) => (
+                      <option key={s.id || s.title} value={s.title}>
+                        {s.title} ({s.price})
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Starter Business Website">Starter Business Website (₹14,999)</option>
+                      <option value="Restaurant Website & Live QR Menu">Restaurant Website & Live QR Menu (₹24,999)</option>
+                      <option value="Monthly Growth & Security Retainer">Monthly Growth & Security Retainer (₹2,999/mo)</option>
+                      <option value="Custom Web Application & CRM">Custom Web Application & CRM (₹49,999+)</option>
+                    </>
+                  )}
                 </select>
               </div>
 

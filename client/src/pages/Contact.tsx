@@ -14,6 +14,7 @@ import {
   Globe
 } from 'lucide-react';
 import { fetchWithAuth } from '../services/api';
+import { subscribeToRealtimeTable } from '../services/supabase';
 import { Footer } from '../components/Footer';
 
 export const Contact: React.FC = () => {
@@ -32,6 +33,27 @@ export const Contact: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successLead, setSuccessLead] = useState<any>(null);
+  const [dbServices, setDbServices] = useState<any[]>([]);
+
+  const loadServices = async () => {
+    try {
+      const res = await fetchWithAuth<{ services: any[] }>('/catalog/services');
+      if (res.services && res.services.length > 0) {
+        setDbServices(res.services);
+        if (!searchParams.get('service')) {
+          setService(res.services[0].title);
+        }
+      }
+    } catch (err) {
+      console.warn('Notice loading DB services:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadServices();
+    const channel = subscribeToRealtimeTable('agency_services', () => loadServices());
+    return () => { channel.unsubscribe(); };
+  }, []);
 
   useEffect(() => {
     if (searchParams.get('service')) {
@@ -211,14 +233,20 @@ export const Contact: React.FC = () => {
                     onChange={(e) => setService(e.target.value)}
                     className="huly-input"
                   >
-                    <option value="Business Website">Business Website ($499)</option>
-                    <option value="Restaurant Website & QR Menu">Restaurant Website & QR Menu</option>
-                    <option value="Wedding Website">Wedding Website</option>
-                    <option value="Portfolio Website">Portfolio Website</option>
-                    <option value="School Website">School Website</option>
-                    <option value="Growth Retainer ($99/mo)">Growth Retainer ($99/mo)</option>
-                    <option value="Custom Web App ($1,499+)">Custom Web App ($1,499+)</option>
-                    <option value="CRM Development">CRM Development</option>
+                    {dbServices.length > 0 ? (
+                      dbServices.map((s) => (
+                        <option key={s.id || s.title} value={s.title}>
+                          {s.title} ({s.price})
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Starter Business Website">Starter Business Website (₹14,999)</option>
+                        <option value="Restaurant Website & Live QR Menu">Restaurant Website & Live QR Menu (₹24,999)</option>
+                        <option value="Monthly Growth & Security Retainer">Monthly Growth & Security Retainer (₹2,999/mo)</option>
+                        <option value="Custom Web Application & CRM">Custom Web Application & CRM (₹49,999+)</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
