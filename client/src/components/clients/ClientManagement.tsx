@@ -194,24 +194,33 @@ export const ClientManagement: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const data = await fetchWithAuth<any>('/clients', {
-        method: 'POST',
-        body: JSON.stringify(newClient),
-      });
+      const userId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const clientId = `cli_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const renewal = newClient.renewalDate
+        ? new Date(newClient.renewalDate).toISOString()
+        : new Date(Date.now() + 365 * 86400000).toISOString();
+      const defaultPassword = `PlatePixel@${Math.floor(1000 + Math.random() * 9000)}`;
 
-      setCreatedCredentials(data);
+      // ✅ PRIMARY: Direct Supabase insert
+      await supabase.from('users').upsert({ id: userId, name: newClient.name.trim(), email: newClient.email.toLowerCase().trim(), password: defaultPassword, role: 'CLIENT' });
+      await supabase.from('clients').insert({ id: clientId, user_id: userId, company_name: newClient.companyName.trim(), phone: newClient.phone || '', address: newClient.address || '', renewal_date: renewal });
+      await supabase.from('portal_clients').upsert({ id: userId, name: newClient.name.trim(), email: newClient.email.toLowerCase().trim(), password: defaultPassword, company_name: newClient.companyName.trim(), phone: newClient.phone || '', role: 'CLIENT' });
+
+      setCreatedCredentials({ userCredentials: { email: newClient.email, temporaryPassword: defaultPassword } });
       setShowAddModal(false);
-      setNewClient({
-        name: '',
-        email: '',
-        companyName: '',
-        phone: '',
-        address: '',
-        renewalDate: '',
-      });
+      setNewClient({ name: '', email: '', companyName: '', phone: '', address: '', renewalDate: '' });
       loadClients();
     } catch (err: any) {
-      alert(err.message || 'Failed to create client');
+      // Fallback to API
+      try {
+        const data = await fetchWithAuth<any>('/clients', { method: 'POST', body: JSON.stringify(newClient) });
+        setCreatedCredentials(data);
+        setShowAddModal(false);
+        setNewClient({ name: '', email: '', companyName: '', phone: '', address: '', renewalDate: '' });
+        loadClients();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to create client');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -222,20 +231,27 @@ export const ClientManagement: React.FC = () => {
     if (!editClient) return;
 
     try {
-      await fetchWithAuth(`/clients/${editClient.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          companyName: editClient.companyName,
-          phone: editClient.phone,
-          address: editClient.address,
-          renewalDate: editClient.renewalDate,
-        }),
-      });
+      // ✅ PRIMARY: Direct Supabase update
+      const payload: any = {};
+      if (editClient.companyName) payload.company_name = editClient.companyName.trim();
+      if (editClient.phone !== undefined) payload.phone = editClient.phone;
+      if (editClient.address !== undefined) payload.address = editClient.address;
+      if (editClient.renewalDate) payload.renewal_date = new Date(editClient.renewalDate).toISOString();
+
+      const { error } = await supabase.from('clients').update(payload).eq('id', editClient.id);
+      if (error) throw new Error(error.message);
 
       setEditClient(null);
       loadClients();
     } catch (err: any) {
-      alert(err.message || 'Failed to update client');
+      // Fallback to API
+      try {
+        await fetchWithAuth(`/clients/${editClient.id}`, { method: 'PUT', body: JSON.stringify({ companyName: editClient.companyName, phone: editClient.phone, address: editClient.address, renewalDate: editClient.renewalDate }) });
+        setEditClient(null);
+        loadClients();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to update client');
+      }
     }
   };
 
@@ -245,29 +261,31 @@ export const ClientManagement: React.FC = () => {
     setSubmitting(true);
 
     try {
-      await fetchWithAuth('/invoices', {
-        method: 'POST',
-        body: JSON.stringify({
-          clientId: invoiceModalClient.id,
-          invoiceNumber: invoiceForm.invoiceNumber,
-          amount: parseFloat(invoiceForm.amount) || 0,
-          status: 'UNPAID',
-          dueDate: invoiceForm.dueDate,
-          description: invoiceForm.description,
-        }),
+      // ✅ PRIMARY: Direct Supabase insert
+      const invoiceId = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const { error } = await supabase.from('invoices').insert({
+        id: invoiceId,
+        client_id: invoiceModalClient.id,
+        invoice_number: invoiceForm.invoiceNumber,
+        amount: parseFloat(invoiceForm.amount) || 0,
+        status: 'PENDING',
       });
+      if (error) throw new Error(error.message);
 
       alert(`Invoice ${invoiceForm.invoiceNumber} generated for ${invoiceModalClient.companyName}!`);
       setInvoiceModalClient(null);
-      setInvoiceForm({
-        invoiceNumber: `INV-${Math.floor(1000 + Math.random() * 9000)}`,
-        amount: '499',
-        dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
-        description: 'Web development & retainer service fee',
-      });
+      setInvoiceForm({ invoiceNumber: `INV-${Math.floor(1000 + Math.random() * 9000)}`, amount: '499', dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], description: 'Web development & retainer service fee' });
       loadClients();
     } catch (err: any) {
-      alert(err.message || 'Failed to generate invoice');
+      // Fallback to API
+      try {
+        await fetchWithAuth('/invoices', { method: 'POST', body: JSON.stringify({ clientId: invoiceModalClient.id, invoiceNumber: invoiceForm.invoiceNumber, amount: parseFloat(invoiceForm.amount) || 0, status: 'PENDING' }) });
+        alert(`Invoice ${invoiceForm.invoiceNumber} generated!`);
+        setInvoiceModalClient(null);
+        loadClients();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to generate invoice');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -279,27 +297,33 @@ export const ClientManagement: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const defaultPdfLink = docForm.fileUrl.trim() || `https://platepixel.agency/contracts/${encodeURIComponent(docForm.fileName)}`;
+      const fileLink = docForm.fileUrl.trim() || `https://platepixel.agency/contracts/${encodeURIComponent(docForm.fileName)}`;
+      const docId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 
-      await fetchWithAuth('/portal/documents', {
-        method: 'POST',
-        body: JSON.stringify({
-          clientId: docModalClient.id,
-          fileName: docForm.fileName,
-          fileUrl: defaultPdfLink,
-        }),
+      // ✅ PRIMARY: Direct Supabase insert
+      const { error } = await supabase.from('documents').insert({
+        id: docId,
+        client_id: docModalClient.id,
+        file_name: docForm.fileName,
+        file_url: fileLink,
       });
+      if (error) throw new Error(error.message);
 
-      alert(`Document "${docForm.fileName}" saved to Supabase DB for ${docModalClient.companyName}!`);
+      alert(`Document "${docForm.fileName}" saved for ${docModalClient.companyName}!`);
       setDocModalClient(null);
-      setDocForm({
-        docType: 'Change Request Agreement (CRA)',
-        fileName: 'Change Request Agreement (CRA).pdf',
-        fileUrl: '',
-      });
+      setDocForm({ docType: 'Change Request Agreement (CRA)', fileName: 'Change Request Agreement (CRA).pdf', fileUrl: '' });
       loadClients();
     } catch (err: any) {
-      alert(err.message || 'Failed to upload document');
+      // Fallback to API
+      try {
+        const fileLink = docForm.fileUrl.trim() || `https://platepixel.agency/contracts/${encodeURIComponent(docForm.fileName)}`;
+        await fetchWithAuth('/portal/documents', { method: 'POST', body: JSON.stringify({ clientId: docModalClient.id, fileName: docForm.fileName, fileUrl: fileLink }) });
+        alert(`Document "${docForm.fileName}" saved!`);
+        setDocModalClient(null);
+        loadClients();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to upload document');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -309,17 +333,29 @@ export const ClientManagement: React.FC = () => {
     if (!confirm('Are you sure you want to delete this client account and all related projects/invoices?')) return;
 
     try {
-      await fetchWithAuth(`/clients/${clientId}`, {
-        method: 'DELETE',
-      });
+      // ✅ PRIMARY: Direct Supabase delete
+      await supabase.from('clients').delete().eq('id', clientId);
       setSelectedClient(null);
       loadClients();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete client');
+      try {
+        await fetchWithAuth(`/clients/${clientId}`, { method: 'DELETE' });
+        setSelectedClient(null);
+        loadClients();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to delete client');
+      }
     }
   };
 
   const viewClientDetails = async (clientId: string) => {
+    // Build from local state first (instant, no network call)
+    const found = clients.find(c => c.id === clientId);
+    if (found) {
+      setSelectedClient({ ...found, projects: [], invoices: [], tickets: [] });
+      return;
+    }
+    // Fallback to API
     try {
       const res = await fetchWithAuth<{ client: any }>(`/clients/${clientId}`);
       setSelectedClient(res.client);

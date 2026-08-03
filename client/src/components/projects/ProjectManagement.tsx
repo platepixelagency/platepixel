@@ -136,22 +136,33 @@ export const ProjectManagement: React.FC = () => {
     setSubmitting(true);
 
     try {
-      await fetchWithAuth('/projects', {
-        method: 'POST',
-        body: JSON.stringify(newProject),
+      const projectId = `proj_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const delivery = newProject.deliveryDate ? new Date(newProject.deliveryDate).toISOString() : null;
+
+      // ✅ PRIMARY: Direct Supabase insert
+      const { error } = await supabase.from('projects').insert({
+        id: projectId,
+        client_id: newProject.clientId,
+        project_name: newProject.projectName,
+        status: newProject.status || 'PLANNING',
+        delivery_date: delivery,
+        description: newProject.description || '',
       });
+      if (error) throw new Error(error.message);
 
       setShowAddModal(false);
-      setNewProject({
-        clientId: clients[0]?.id || '',
-        projectName: '',
-        status: 'PLANNING',
-        deliveryDate: '',
-        description: '',
-      });
+      setNewProject({ clientId: clients[0]?.id || '', projectName: '', status: 'PLANNING', deliveryDate: '', description: '' });
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Failed to create project');
+      // Fallback to API
+      try {
+        await fetchWithAuth('/projects', { method: 'POST', body: JSON.stringify(newProject) });
+        setShowAddModal(false);
+        setNewProject({ clientId: clients[0]?.id || '', projectName: '', status: 'PLANNING', deliveryDate: '', description: '' });
+        loadData();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to create project');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -159,16 +170,24 @@ export const ProjectManagement: React.FC = () => {
 
   const handleUpdateStatus = async (projectId: string, newStatus: string) => {
     try {
-      await fetchWithAuth(`/projects/${projectId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus }),
-      });
-      loadData();
+      // ✅ PRIMARY: Direct Supabase update
+      const { error } = await supabase.from('projects').update({ status: newStatus }).eq('id', projectId);
+      if (error) throw new Error(error.message);
+
+      // Optimistic UI update
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: newStatus as any } : p));
       if (selectedProject?.id === projectId) {
         setSelectedProject(prev => (prev ? { ...prev, status: newStatus as any } : null));
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to update project status');
+      // Fallback to API
+      try {
+        await fetchWithAuth(`/projects/${projectId}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
+        loadData();
+        if (selectedProject?.id === projectId) setSelectedProject(prev => (prev ? { ...prev, status: newStatus as any } : null));
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to update project status');
+      }
     }
   };
 
@@ -177,20 +196,26 @@ export const ProjectManagement: React.FC = () => {
     if (!editProject) return;
 
     try {
-      await fetchWithAuth(`/projects/${editProject.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          projectName: editProject.projectName,
-          deliveryDate: editProject.deliveryDate,
-          description: editProject.description,
-          status: editProject.status,
-        }),
-      });
+      // ✅ PRIMARY: Direct Supabase update
+      const { error } = await supabase.from('projects').update({
+        project_name: editProject.projectName,
+        delivery_date: editProject.deliveryDate ? new Date(editProject.deliveryDate).toISOString() : null,
+        description: editProject.description,
+        status: editProject.status,
+      }).eq('id', editProject.id);
+      if (error) throw new Error(error.message);
 
       setEditProject(null);
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Failed to edit project details');
+      // Fallback to API
+      try {
+        await fetchWithAuth(`/projects/${editProject.id}`, { method: 'PUT', body: JSON.stringify({ projectName: editProject.projectName, deliveryDate: editProject.deliveryDate, description: editProject.description, status: editProject.status }) });
+        setEditProject(null);
+        loadData();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to edit project details');
+      }
     }
   };
 
@@ -198,13 +223,18 @@ export const ProjectManagement: React.FC = () => {
     if (!confirm('Are you sure you want to delete this project?')) return;
 
     try {
-      await fetchWithAuth(`/projects/${projectId}`, {
-        method: 'DELETE',
-      });
+      // ✅ PRIMARY: Direct Supabase delete
+      await supabase.from('projects').delete().eq('id', projectId);
       setSelectedProject(null);
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete project');
+      try {
+        await fetchWithAuth(`/projects/${projectId}`, { method: 'DELETE' });
+        setSelectedProject(null);
+        loadData();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to delete project');
+      }
     }
   };
 

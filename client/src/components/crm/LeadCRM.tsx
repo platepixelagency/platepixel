@@ -195,39 +195,67 @@ export const LeadCRM: React.FC = () => {
     }
 
     try {
-      await fetchWithAuth(`/leads/${leadId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus }),
-      });
-      loadLeads(true);
+      // ✅ PRIMARY: Direct Supabase update
+      const { error } = await supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
+      if (error) throw new Error(error.message);
     } catch (err: any) {
-      alert(err.message || 'Failed to update status');
-      loadLeads(true);
+      // Fallback to API
+      try {
+        await fetchWithAuth(`/leads/${leadId}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to update status');
+        loadLeads(true); // revert optimistic update
+      }
     }
   };
 
   const handleConvertLead = async (leadId: string) => {
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) return;
+
     try {
-      const data = await fetchWithAuth<any>(`/leads/${leadId}/convert`, {
-        method: 'POST',
-      });
-      setConvertedResult(data);
+      // ✅ PRIMARY: Direct Supabase convert
+      const userId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const clientId = `cli_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const defaultPassword = `PlatePixel@${Math.floor(1000 + Math.random() * 9000)}`;
+      const renewal = new Date(Date.now() + 365 * 86400000).toISOString();
+
+      await supabase.from('portal_clients').upsert({ id: userId, name: lead.name, email: lead.email, password: defaultPassword, company_name: lead.businessName || `${lead.name}'s Business`, phone: lead.mobile || '', role: 'CLIENT' });
+      await supabase.from('users').upsert({ id: userId, name: lead.name, email: lead.email, password: defaultPassword, role: 'CLIENT' });
+      await supabase.from('clients').insert({ id: clientId, user_id: userId, company_name: lead.businessName || `${lead.name}'s Business`, phone: lead.mobile || '', address: '', renewal_date: renewal });
+      await supabase.from('leads').update({ status: 'WON' }).eq('id', leadId);
+
+      setConvertedResult({ message: 'Lead converted!', userCredentials: { email: lead.email, temporaryPassword: defaultPassword } });
+      setSelectedLead(null);
       loadLeads();
     } catch (err: any) {
-      alert(err.message || 'Failed to convert lead to client');
+      // Fallback to API
+      try {
+        const data = await fetchWithAuth<any>(`/leads/${leadId}/convert`, { method: 'POST' });
+        setConvertedResult(data);
+        loadLeads();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to convert lead to client');
+      }
     }
   };
 
   const handleDeleteLead = async (leadId: string) => {
     if (!confirm('Are you sure you want to delete this lead record?')) return;
     try {
-      await fetchWithAuth(`/leads/${leadId}`, {
-        method: 'DELETE',
-      });
+      // ✅ PRIMARY: Direct Supabase delete
+      await supabase.from('leads').delete().eq('id', leadId);
       setSelectedLead(null);
       loadLeads();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete lead');
+      // Fallback to API
+      try {
+        await fetchWithAuth(`/leads/${leadId}`, { method: 'DELETE' });
+        setSelectedLead(null);
+        loadLeads();
+      } catch (apiErr: any) {
+        alert(apiErr.message || 'Failed to delete lead');
+      }
     }
   };
 
