@@ -18,6 +18,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 
+import { subscribeToRealtimeTable } from '../../services/supabase';
+
 interface ExtendedProject extends Project {
   client: {
     id: string;
@@ -52,9 +54,9 @@ export const ProjectManagement: React.FC = () => {
 
   const [submitting, setSubmitting] = useState(false);
 
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [projRes, clientRes] = await Promise.all([
         fetchWithAuth<{ projects: ExtendedProject[] }>('/projects'),
         fetchWithAuth<{ clients: any[] }>('/clients'),
@@ -67,12 +69,19 @@ export const ProjectManagement: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to load project management data:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
+    const sub = subscribeToRealtimeTable('projects', () => loadData(true));
+    const intervalId = setInterval(() => loadData(true), 10000);
+
+    return () => {
+      sub.unsubscribe();
+      clearInterval(intervalId);
+    };
   }, []);
 
   const handleCreateProject = async (e: React.FormEvent) => {

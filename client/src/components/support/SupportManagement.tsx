@@ -16,6 +16,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+import { subscribeToRealtimeTable } from '../../services/supabase';
+
 interface ExtendedTicket extends Ticket {
   client: {
     id: string;
@@ -49,9 +51,9 @@ export const SupportManagement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const isAdminOrTeam = user?.role === 'ADMIN' || user?.role === 'TEAM_MEMBER';
 
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [tickRes, clientRes] = await Promise.all([
         fetchWithAuth<{ tickets: ExtendedTicket[] }>('/tickets'),
         isAdminOrTeam ? fetchWithAuth<{ clients: any[] }>('/clients') : Promise.resolve({ clients: [] }),
@@ -64,12 +66,19 @@ export const SupportManagement: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to load support tickets data:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
+    const sub = subscribeToRealtimeTable('tickets', () => loadData(true));
+    const intervalId = setInterval(() => loadData(true), 10000);
+
+    return () => {
+      sub.unsubscribe();
+      clearInterval(intervalId);
+    };
   }, []);
 
   const handleCreateTicket = async (e: React.FormEvent) => {

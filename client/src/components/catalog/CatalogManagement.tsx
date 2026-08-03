@@ -26,6 +26,8 @@ import {
   MessageCircle
 } from 'lucide-react';
 
+import { subscribeToRealtimeTable } from '../../services/supabase';
+
 export const CatalogManagement: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'services' | 'pricing' | 'portfolio'>('services');
 
@@ -98,9 +100,9 @@ export const CatalogManagement: React.FC = () => {
     tags: '',
   });
 
-  const loadCatalogData = async () => {
+  const loadCatalogData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [servRes, priceRes, portRes, heroRes, settingsRes] = await Promise.allSettled([
         fetchWithAuth<{ services?: any[] }>('/catalog/services'),
         fetchWithAuth<{ pricing?: any[] }>('/catalog/pricing'),
@@ -117,7 +119,7 @@ export const CatalogManagement: React.FC = () => {
     } catch (err) {
       console.error('Failed to load catalog data:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -157,6 +159,17 @@ export const CatalogManagement: React.FC = () => {
 
   useEffect(() => {
     loadCatalogData();
+    const s1 = subscribeToRealtimeTable('agency_services', () => loadCatalogData(true));
+    const s2 = subscribeToRealtimeTable('agency_pricing', () => loadCatalogData(true));
+    const s3 = subscribeToRealtimeTable('agency_portfolio', () => loadCatalogData(true));
+    const intervalId = setInterval(() => loadCatalogData(true), 10000);
+
+    return () => {
+      s1.unsubscribe();
+      s2.unsubscribe();
+      s3.unsubscribe();
+      clearInterval(intervalId);
+    };
   }, []);
 
   // --- SAVE / EDIT SERVICE ---
@@ -313,7 +326,7 @@ export const CatalogManagement: React.FC = () => {
           </button>
 
           <button
-            onClick={loadCatalogData}
+            onClick={() => loadCatalogData()}
             className="btn-pill-secondary text-xs py-2 px-3 flex items-center space-x-1.5"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />

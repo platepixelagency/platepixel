@@ -35,20 +35,22 @@ export const AutomationManagement: React.FC = () => {
   const [testType, setTestType] = useState<string>('WELCOME');
   const [testing, setTesting] = useState<boolean>(false);
 
-  const loadLogs = async () => {
+  const loadLogs = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetchWithAuth<{ logs: AutomationLogItem[] }>('/automation/logs');
       setLogs(res.logs);
     } catch (err: any) {
       console.error('Failed to load automation logs:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadLogs();
+    const intervalId = setInterval(() => loadLogs(true), 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleTriggerRenewals = async () => {

@@ -6,10 +6,19 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const subscribeToRealtimeTable = (table: string, onUpdate: (payload: any) => void) => {
-  return supabase
-    .channel(`public:${table}`)
+  const channelId = `realtime_${table}_${Math.random().toString(36).substring(2, 7)}`;
+  const channel = supabase
+    .channel(channelId)
     .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
       onUpdate(payload);
     })
     .subscribe();
+
+  return {
+    unsubscribe: () => {
+      supabase.removeChannel(channel);
+    },
+    channel,
+  };
 };
+

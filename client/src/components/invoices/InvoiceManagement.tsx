@@ -19,6 +19,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+import { subscribeToRealtimeTable } from '../../services/supabase';
+
 interface PaymentItem {
   id: string;
   amount: number;
@@ -67,9 +69,9 @@ export const InvoiceManagement: React.FC = () => {
 
   const [submitting, setSubmitting] = useState(false);
 
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [invRes, clientRes] = await Promise.all([
         fetchWithAuth<{ invoices: ExtendedInvoice[] }>('/invoices'),
         fetchWithAuth<{ clients: any[] }>('/clients'),
@@ -82,12 +84,19 @@ export const InvoiceManagement: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to load invoice management data:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
+    const sub = subscribeToRealtimeTable('invoices', () => loadData(true));
+    const intervalId = setInterval(() => loadData(true), 10000);
+
+    return () => {
+      sub.unsubscribe();
+      clearInterval(intervalId);
+    };
   }, []);
 
   const handleCreateInvoice = async (e: React.FormEvent) => {

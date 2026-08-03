@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Lead } from '../../types';
 import { fetchWithAuth } from '../../services/api';
-import { subscribeToRealtimeTable } from '../../services/supabase';
+import { supabase, subscribeToRealtimeTable } from '../../services/supabase';
 import { 
   Plus, 
   Search, 
@@ -18,7 +18,8 @@ import {
   X,
   ChevronRight,
   Filter,
-  Eye
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 
 export const LeadCRM: React.FC = () => {
@@ -27,6 +28,7 @@ export const LeadCRM: React.FC = () => {
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
+  const [dbError, setDbError] = useState<string>('');
 
   // Modals state
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -51,6 +53,16 @@ export const LeadCRM: React.FC = () => {
 
   const loadServices = async () => {
     try {
+      // Direct Supabase fetch for services
+      const { data } = await supabase.from('agency_services').select('*').order('created_at', { ascending: false });
+      if (data && data.length > 0) {
+        setDbServices(data);
+        return;
+      }
+    } catch (e) {}
+
+    // API fallback
+    try {
       const res = await fetchWithAuth<{ services: any[] }>('/catalog/services');
       if (res.services && res.services.length > 0) {
         setDbServices(res.services);
@@ -58,26 +70,90 @@ export const LeadCRM: React.FC = () => {
     } catch (e) {}
   };
 
-  const loadLeads = async () => {
+  const mapSupabaseLead = (l: any): Lead => ({
+    id: l.id,
+    name: l.name || '',
+    businessName: l.business_name || l.businessName || `${l.name}'s Business`,
+    mobile: l.mobile || '',
+    email: l.email || '',
+    category: l.category || 'General',
+    service: l.service || '',
+    budget: l.budget || 'Not Specified',
+    message: l.message || '',
+    status: l.status || 'NEW',
+    createdAt: l.created_at || l.createdAt || new Date().toISOString(),
+  });
+
+  const loadLeads = async (silent = false) => {
     try {
-      setLoading(true);
-      const res = await fetchWithAuth<{ leads: Lead[] }>('/leads');
-      setLeads(res.leads);
+      if (!silent) setLoading(true);
+      setDbError('');
+
+      // ✅ PRIMARY: Direct Supabase fetch
+      const { data: supaLeads, error: supaErr } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      console.log('[LeadCRM] Supabase fetch:', { count: supaLeads?.length, error: supaErr?.message, status: supaErr?.code });
+
+      if (supaErr) {
+        console.warn('[LeadCRM] Supabase error:', supaErr.message, supaErr.code);
+        // Don't return — fall through to API
+      }
+
+      if (supaLeads && supaLeads.length > 0) {
+        setLeads(supaLeads.map(mapSupabaseLead));
+        if (!silent) setLoading(false);
+        return;
+      }
+
+      // 🔄 FALLBACK: API server fetch (when Supabase returns empty or errors)
+      try {
+        console.log('[LeadCRM] Trying API fallback...');
+        const res = await fetchWithAuth<{ leads: Lead[] }>('/leads');
+        console.log('[LeadCRM] API response:', { count: res.leads?.length });
+        if (res.leads && res.leads.length > 0) {
+          setLeads(res.leads);
+          if (!silent) setLoading(false);
+          return;
+        }
+      } catch (apiErr: any) {
+        console.warn('[LeadCRM] API fallback error:', apiErr.message);
+        // Show error only if supabase also failed
+        if (supaErr) {
+          setDbError(`DB Error: ${supaErr.message}. Server also offline. Check RLS policies or server status.`);
+        } else if (!supaLeads || supaLeads.length === 0) {
+          setDbError('No leads found. If leads exist, check Supabase Row Level Security (RLS) policies for the leads table.');
+        }
+      }
+
+      // Both empty — preserve existing list on silent refresh, show empty on first load
+      if (!silent) {
+        if (!supaErr && supaLeads !== null) {
+          setLeads([]); // Actually empty DB
+        }
+        // else keep existing leads shown while errors persist
+      }
     } catch (err: any) {
-      console.error('Failed to load leads:', err);
+      console.error('[LeadCRM] Fatal error:', err);
+      if (!silent) setDbError(`Connection failed: ${err.message}`);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadLeads();
     loadServices();
-    const leadChannel = subscribeToRealtimeTable('leads', () => loadLeads());
+    const leadChannel = subscribeToRealtimeTable('leads', () => loadLeads(true));
     const serviceChannel = subscribeToRealtimeTable('agency_services', () => loadServices());
+    const intervalId = setInterval(() => loadLeads(true), 10000);
+
     return () => {
       leadChannel.unsubscribe();
       serviceChannel.unsubscribe();
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -103,7 +179,7 @@ export const LeadCRM: React.FC = () => {
         budget: '$500 - $1,500',
         message: '',
       });
-      loadLeads();
+      loadLeads(true);
     } catch (err: any) {
       setError(err.message || 'Failed to create lead');
     } finally {
@@ -112,17 +188,21 @@ export const LeadCRM: React.FC = () => {
   };
 
   const handleUpdateStatus = async (leadId: string, newStatus: string) => {
+    // 1. Optimistic UI update
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus as any } : l));
+    if (selectedLead?.id === leadId) {
+      setSelectedLead(prev => (prev ? { ...prev, status: newStatus as any } : null));
+    }
+
     try {
       await fetchWithAuth(`/leads/${leadId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus }),
       });
-      loadLeads();
-      if (selectedLead?.id === leadId) {
-        setSelectedLead(prev => (prev ? { ...prev, status: newStatus as any } : null));
-      }
+      loadLeads(true);
     } catch (err: any) {
       alert(err.message || 'Failed to update status');
+      loadLeads(true);
     }
   };
 
@@ -187,8 +267,33 @@ export const LeadCRM: React.FC = () => {
     { key: 'LOST', title: 'Lost', color: 'border-red-500/40 text-red-400' },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-10 h-10 rounded-full border-2 border-[#5683da] border-t-transparent animate-spin" />
+        <p className="text-xs text-[#95979e] font-mono">Loading leads from database...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+
+      {/* DB Error Banner */}
+      {dbError && (
+        <div className="flex items-center space-x-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-xs text-red-400">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{dbError}</span>
+          <button
+            onClick={() => loadLeads()}
+            className="ml-auto flex items-center space-x-1 text-red-400 hover:text-white transition-colors"
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
       {/* Header Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111111] p-6 rounded-2xl border border-[#4a4b50]">
         <div>
@@ -200,6 +305,14 @@ export const LeadCRM: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => loadLeads()}
+            title="Refresh leads"
+            className="w-8 h-8 rounded-full bg-[#111111] border border-[#4a4b50] text-[#95979e] hover:text-white hover:border-[#5683da] flex items-center justify-center transition-all"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+
           <div className="flex items-center bg-[#090a0c] border border-[#4a4b50] rounded-full p-1 text-xs">
             <button
               onClick={() => setViewMode('kanban')}

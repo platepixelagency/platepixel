@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Client, User } from '../../types';
 import { fetchWithAuth } from '../../services/api';
-import { supabase } from '../../services/supabase';
+import { supabase, subscribeToRealtimeTable } from '../../services/supabase';
 import { 
   Building, 
   Plus, 
@@ -77,9 +77,9 @@ export const ClientManagement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [createdCredentials, setCreatedCredentials] = useState<any>(null);
 
-  const loadClients = async () => {
+  const loadClients = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       let loadedClients: ExtendedClient[] = [];
 
       // 1. Primary API fetch
@@ -164,12 +164,21 @@ export const ClientManagement: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to load clients:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadClients();
+    const c1 = subscribeToRealtimeTable('clients', () => loadClients(true));
+    const c2 = subscribeToRealtimeTable('portal_clients', () => loadClients(true));
+    const intervalId = setInterval(() => loadClients(true), 10000);
+
+    return () => {
+      c1.unsubscribe();
+      c2.unsubscribe();
+      clearInterval(intervalId);
+    };
   }, []);
 
   const handleCreateClient = async (e: React.FormEvent) => {
