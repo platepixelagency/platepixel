@@ -82,81 +82,88 @@ export const ClientManagement: React.FC = () => {
       if (!silent) setLoading(true);
       let loadedClients: ExtendedClient[] = [];
 
-      // 1. Primary API fetch
+      // ✅ PRIMARY: Direct Supabase (fast, no server cold-start)
       try {
-        const res = await fetchWithAuth<{ clients: ExtendedClient[] }>('/clients');
-        if (res.clients && res.clients.length > 0) {
-          loadedClients = res.clients;
+        // Parallel fetch clients + portal_clients simultaneously
+        const [supaResult, portalResult] = await Promise.all([
+          supabase.from('clients').select('*, user:users(*)'),
+          supabase.from('portal_clients').select('*'),
+        ]);
+
+        const { data: supaClients } = supaResult;
+        const { data: portalClients } = portalResult;
+        const combinedClientsMap = new Map<string, any>();
+
+        if (supaClients && supaClients.length > 0) {
+          supaClients.forEach((c: any) => {
+            combinedClientsMap.set(c.id, {
+              id: c.id,
+              userId: c.user_id,
+              companyName: c.company_name,
+              phone: c.phone || '',
+              address: c.address || '',
+              renewalDate: c.renewal_date,
+              user: c.user || { name: c.company_name, email: 'client@agency.com' },
+              _count: { projects: 0, invoices: 0, tickets: 0, documents: 0 },
+            });
+          });
         }
-      } catch (e) {}
 
-      // 2. Direct Supabase DB Fallback
-      if (loadedClients.length === 0) {
-        try {
-          const { data: supaClients } = await supabase
-            .from('clients')
-            .select('*, user:users(*)');
-
-          const { data: portalClients } = await supabase
-            .from('portal_clients')
-            .select('*');
-
-          const combinedClientsMap = new Map<string, any>();
-
-          if (supaClients && supaClients.length > 0) {
-            supaClients.forEach((c: any) => {
-              combinedClientsMap.set(c.id, {
-                id: c.id,
-                userId: c.user_id,
-                companyName: c.company_name,
-                phone: c.phone || '',
-                address: c.address || '',
-                renewalDate: c.renewal_date,
-                user: c.user || { name: c.company_name, email: 'client@agency.com' },
+        if (portalClients && portalClients.length > 0) {
+          portalClients.forEach((pc: any) => {
+            if (!combinedClientsMap.has(pc.id)) {
+              combinedClientsMap.set(pc.id, {
+                id: pc.id,
+                userId: pc.id,
+                companyName: pc.company_name || `${pc.name}'s Business`,
+                phone: pc.phone || '',
+                address: 'PlatePixel Client Workspace',
+                renewalDate: new Date(Date.now() + 365 * 86400000).toISOString(),
+                user: { id: pc.id, name: pc.name, email: pc.email, role: pc.role || 'CLIENT' },
                 _count: { projects: 0, invoices: 0, tickets: 0, documents: 0 },
               });
-            });
-          }
+            }
+          });
+        }
 
-          if (portalClients && portalClients.length > 0) {
-            portalClients.forEach((pc: any) => {
-              if (!combinedClientsMap.has(pc.id)) {
-                combinedClientsMap.set(pc.id, {
-                  id: pc.id,
-                  userId: pc.id,
-                  companyName: pc.company_name || `${pc.name}'s Business`,
-                  phone: pc.phone || '',
-                  address: 'PlatePixel Client Workspace',
-                  renewalDate: new Date(Date.now() + 365 * 86400000).toISOString(),
-                  user: { id: pc.id, name: pc.name, email: pc.email, role: pc.role || 'CLIENT' },
-                  _count: { projects: 0, invoices: 0, tickets: 0, documents: 0 },
-                });
-              }
-            });
-          }
+        const clientList = Array.from(combinedClientsMap.values());
 
-          const clientList = Array.from(combinedClientsMap.values());
+        if (clientList.length > 0) {
+          // ⚡ BATCH: 4 parallel queries instead of N×4 sequential queries
+          const [projRows, invRows, tickRows, docRows] = await Promise.all([
+            supabase.from('projects').select('client_id'),
+            supabase.from('invoices').select('client_id'),
+            supabase.from('tickets').select('client_id'),
+            supabase.from('documents').select('client_id'),
+          ]);
 
-          // Fetch counts for each client
-          for (const client of clientList) {
-            try {
-              const { count: projCount } = await supabase.from('projects').select('*', { count: 'exact', head: true }).eq('client_id', client.id);
-              const { count: invCount } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('client_id', client.id);
-              const { count: tickCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('client_id', client.id);
-              const { count: docCount } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('client_id', client.id);
+          const countOf = (rows: any[] | null, clientId: string) =>
+            (rows || []).filter((r: any) => r.client_id === clientId).length;
 
-              client._count = {
-                projects: projCount || 0,
-                invoices: invCount || 0,
-                tickets: tickCount || 0,
-                documents: docCount || 0,
-              };
-            } catch (e) {}
-          }
+          clientList.forEach(client => {
+            client._count = {
+              projects: countOf(projRows.data, client.id),
+              invoices: countOf(invRows.data, client.id),
+              tickets: countOf(tickRows.data, client.id),
+              documents: countOf(docRows.data, client.id),
+            };
+          });
 
           loadedClients = clientList;
-        } catch (err: any) {
-          console.error('Supabase direct clients fetch notice:', err);
+        }
+      } catch (supaErr: any) {
+        console.warn('[ClientManagement] Supabase fetch error:', supaErr.message);
+      }
+
+      // 🔄 FALLBACK: API server (only if Supabase returned nothing)
+      if (loadedClients.length === 0) {
+        try {
+          const res = await fetchWithAuth<{ clients: ExtendedClient[] }>('/clients');
+          if (res.clients && res.clients.length > 0) {
+            loadedClients = res.clients;
+          }
+        } catch (apiErr: any) {
+          console.warn('[ClientManagement] API fallback failed:', apiErr.message);
         }
       }
 
@@ -167,6 +174,7 @@ export const ClientManagement: React.FC = () => {
       if (!silent) setLoading(false);
     }
   };
+
 
   useEffect(() => {
     loadClients();

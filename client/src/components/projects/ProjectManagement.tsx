@@ -18,7 +18,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-import { subscribeToRealtimeTable } from '../../services/supabase';
+import { supabase, subscribeToRealtimeTable } from '../../services/supabase';
 
 interface ExtendedProject extends Project {
   client: {
@@ -57,14 +57,61 @@ export const ProjectManagement: React.FC = () => {
   const loadData = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const [projRes, clientRes] = await Promise.all([
-        fetchWithAuth<{ projects: ExtendedProject[] }>('/projects'),
-        fetchWithAuth<{ clients: any[] }>('/clients'),
-      ]);
-      setProjects(projRes.projects);
-      setClients(clientRes.clients);
-      if (clientRes.clients.length > 0 && !newProject.clientId) {
-        setNewProject(prev => ({ ...prev, clientId: clientRes.clients[0].id }));
+
+      // ✅ PRIMARY: Direct Supabase (fast, parallel)
+      try {
+        const [projResult, clientResult, portalResult] = await Promise.all([
+          supabase.from('projects').select('*, client:clients(id, company_name, user:users(name, email))').order('created_at', { ascending: false }),
+          supabase.from('clients').select('id, company_name, user:users(name, email)'),
+          supabase.from('portal_clients').select('id, name, email, company_name'),
+        ]);
+
+        if (projResult.data && projResult.data.length > 0) {
+          const mappedProjects = projResult.data.map((p: any) => ({
+            id: p.id,
+            clientId: p.client_id,
+            projectName: p.project_name,
+            status: p.status,
+            deliveryDate: p.delivery_date || p.deliveryDate,
+            description: p.description || '',
+            createdAt: p.created_at,
+            client: p.client
+              ? { id: p.client.id, companyName: p.client.company_name, user: p.client.user || { name: p.client.company_name, email: '' } }
+              : { id: p.client_id || '', companyName: 'Unknown Client', user: { name: '', email: '' } },
+          }));
+          setProjects(mappedProjects);
+        } else {
+          setProjects([]);
+        }
+
+        // Merge clients + portal clients for dropdown
+        const clientMap = new Map<string, any>();
+        (clientResult.data || []).forEach((c: any) => clientMap.set(c.id, { id: c.id, companyName: c.company_name, user: c.user }));
+        (portalResult.data || []).forEach((pc: any) => { if (!clientMap.has(pc.id)) clientMap.set(pc.id, { id: pc.id, companyName: pc.company_name || `${pc.name}'s Business`, user: { name: pc.name, email: pc.email } }); });
+        const allClients = Array.from(clientMap.values());
+        setClients(allClients);
+        if (allClients.length > 0 && !newProject.clientId) {
+          setNewProject(prev => ({ ...prev, clientId: allClients[0].id }));
+        }
+        if (!silent) setLoading(false);
+        return;
+      } catch (supaErr: any) {
+        console.warn('[ProjectManagement] Supabase fetch error:', supaErr.message);
+      }
+
+      // 🔄 FALLBACK: API server
+      try {
+        const [projRes, clientRes] = await Promise.all([
+          fetchWithAuth<{ projects: ExtendedProject[] }>('/projects'),
+          fetchWithAuth<{ clients: any[] }>('/clients'),
+        ]);
+        setProjects(projRes.projects || []);
+        setClients(clientRes.clients || []);
+        if ((clientRes.clients || []).length > 0 && !newProject.clientId) {
+          setNewProject(prev => ({ ...prev, clientId: clientRes.clients[0].id }));
+        }
+      } catch (apiErr: any) {
+        console.warn('[ProjectManagement] API fallback error:', apiErr.message);
       }
     } catch (err: any) {
       console.error('Failed to load project management data:', err);

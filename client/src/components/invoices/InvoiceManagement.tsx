@@ -19,7 +19,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
-import { subscribeToRealtimeTable } from '../../services/supabase';
+import { supabase, subscribeToRealtimeTable } from '../../services/supabase';
 
 interface PaymentItem {
   id: string;
@@ -72,14 +72,59 @@ export const InvoiceManagement: React.FC = () => {
   const loadData = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const [invRes, clientRes] = await Promise.all([
-        fetchWithAuth<{ invoices: ExtendedInvoice[] }>('/invoices'),
-        fetchWithAuth<{ clients: any[] }>('/clients'),
-      ]);
-      setInvoices(invRes.invoices);
-      setClients(clientRes.clients);
-      if (clientRes.clients.length > 0 && !newInvoice.clientId) {
-        setNewInvoice(prev => ({ ...prev, clientId: clientRes.clients[0].id }));
+
+      // ✅ PRIMARY: Direct Supabase (fast, parallel)
+      try {
+        const [invResult, clientResult, portalResult] = await Promise.all([
+          supabase.from('invoices').select('*, client:clients(id, company_name, phone, address, user:users(name, email)), payments(*)').order('created_at', { ascending: false }),
+          supabase.from('clients').select('id, company_name, user:users(name, email)'),
+          supabase.from('portal_clients').select('id, name, email, company_name'),
+        ]);
+
+        if (invResult.data) {
+          const mappedInvoices = invResult.data.map((inv: any) => ({
+            id: inv.id,
+            clientId: inv.client_id,
+            invoiceNumber: inv.invoice_number || inv.invoiceNumber,
+            amount: inv.amount,
+            status: inv.status,
+            createdAt: inv.created_at,
+            updatedAt: inv.updated_at,
+            payments: inv.payments || [],
+            client: inv.client
+              ? { id: inv.client.id, companyName: inv.client.company_name, phone: inv.client.phone || '', address: inv.client.address || '', user: inv.client.user || { name: inv.client.company_name, email: '' } }
+              : { id: inv.client_id || '', companyName: 'Unknown Client', phone: '', address: '', user: { name: '', email: '' } },
+          }));
+          setInvoices(mappedInvoices);
+        }
+
+        const clientMap = new Map<string, any>();
+        (clientResult.data || []).forEach((c: any) => clientMap.set(c.id, { id: c.id, companyName: c.company_name, user: c.user }));
+        (portalResult.data || []).forEach((pc: any) => { if (!clientMap.has(pc.id)) clientMap.set(pc.id, { id: pc.id, companyName: pc.company_name || `${pc.name}'s Business`, user: { name: pc.name, email: pc.email } }); });
+        const allClients = Array.from(clientMap.values());
+        setClients(allClients);
+        if (allClients.length > 0 && !newInvoice.clientId) {
+          setNewInvoice(prev => ({ ...prev, clientId: allClients[0].id }));
+        }
+        if (!silent) setLoading(false);
+        return;
+      } catch (supaErr: any) {
+        console.warn('[InvoiceManagement] Supabase fetch error:', supaErr.message);
+      }
+
+      // 🔄 FALLBACK: API server
+      try {
+        const [invRes, clientRes] = await Promise.all([
+          fetchWithAuth<{ invoices: ExtendedInvoice[] }>('/invoices'),
+          fetchWithAuth<{ clients: any[] }>('/clients'),
+        ]);
+        setInvoices(invRes.invoices || []);
+        setClients(clientRes.clients || []);
+        if ((clientRes.clients || []).length > 0 && !newInvoice.clientId) {
+          setNewInvoice(prev => ({ ...prev, clientId: clientRes.clients[0].id }));
+        }
+      } catch (apiErr: any) {
+        console.warn('[InvoiceManagement] API fallback error:', apiErr.message);
       }
     } catch (err: any) {
       console.error('Failed to load invoice management data:', err);
