@@ -14,7 +14,7 @@ import {
   Globe
 } from 'lucide-react';
 import { fetchWithAuth } from '../services/api';
-import { subscribeToRealtimeTable } from '../services/supabase';
+import { supabase, subscribeToRealtimeTable } from '../services/supabase';
 import { Footer } from '../components/Footer';
 
 export const Contact: React.FC = () => {
@@ -27,7 +27,7 @@ export const Contact: React.FC = () => {
   const [email, setEmail] = useState('');
   const [category, setCategory] = useState('Website Development');
   const [service, setService] = useState(prefilledService);
-  const [budget, setBudget] = useState('$500 - $1,500');
+  const [budget, setBudget] = useState('₹5,000 – ₹25,000');
   const [message, setMessage] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
@@ -37,15 +37,28 @@ export const Contact: React.FC = () => {
 
   const loadServices = async () => {
     try {
+      // Primary: Direct Supabase (bypasses Vercel API proxy issues)
+      const { data, error } = await supabase
+        .from('agency_services')
+        .select('id, title, price, category')
+        .order('created_at', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        setDbServices(data);
+        if (!searchParams.get('service')) {
+          setService(data[0].title);
+        }
+        return;
+      }
+
+      // Fallback: API
       const res = await fetchWithAuth<{ services: any[] }>('/catalog/services');
       if (res.services && res.services.length > 0) {
         setDbServices(res.services);
-        if (!searchParams.get('service')) {
-          setService(res.services[0].title);
-        }
+        if (!searchParams.get('service')) setService(res.services[0].title);
       }
     } catch (err) {
-      console.warn('Notice loading DB services:', err);
+      console.warn('[Contact] loadServices notice:', err);
     }
   };
 
@@ -199,7 +212,7 @@ export const Contact: React.FC = () => {
                       required
                       value={mobile}
                       onChange={(e) => setMobile(e.target.value)}
-                      placeholder="+1 (555) 019-2831"
+                      placeholder="+91 98765 43210"
                       className="huly-input huly-input-icon"
                     />
                   </div>
@@ -254,10 +267,11 @@ export const Contact: React.FC = () => {
                     onChange={(e) => setBudget(e.target.value)}
                     className="huly-input"
                   >
-                    <option value="$300 - $500">$300 - $500</option>
-                    <option value="$500 - $1,500">$500 - $1,500</option>
-                    <option value="$1,500 - $3,000">$1,500 - $3,000</option>
-                    <option value="$3,000+">$3,000+ Enterprise</option>
+                    <option value="₹5,000 – ₹25,000">₹5,000 – ₹25,000 (Starter)</option>
+                    <option value="₹25,000 – ₹75,000">₹25,000 – ₹75,000 (Business)</option>
+                    <option value="₹75,000 – ₹1,50,000">₹75,000 – ₹1,50,000 (Premium)</option>
+                    <option value="₹1,50,000 – ₹3,00,000">₹1,50,000 – ₹3,00,000 (Enterprise)</option>
+                    <option value="₹3,00,000+">₹3,00,000+ (Custom / Large Scale)</option>
                   </select>
                 </div>
               </div>

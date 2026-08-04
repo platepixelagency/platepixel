@@ -20,7 +20,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { CountUpNumber } from '../components/CountUpNumber';
-import { subscribeToRealtimeTable } from '../services/supabase';
+import { supabase, subscribeToRealtimeTable } from '../services/supabase';
 import { fetchWithAuth } from '../services/api';
 import { Footer } from '../components/Footer';
 
@@ -35,21 +35,58 @@ export const Home: React.FC = () => {
     onTimeDelivery: '100%',
   });
 
-  useEffect(() => {
+  const loadHeroStats = async () => {
+    // Primary: Direct Supabase
+    try {
+      const { data, error } = await supabase
+        .from('hero_stats')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setHeroStats({
+          clientProjects: data.client_projects ?? '24 Active',
+          leadCrmWon: data.lead_crm_won ?? '₹14,85,000',
+          maintenanceRenewals: data.maintenance_renewals ?? '98% On Time',
+          leadsGenerated: data.leads_generated ?? '100+',
+          activeRetainers: data.active_retainers ?? '30+',
+          uptimeSecurity: data.uptime_security ?? '99.9%',
+          onTimeDelivery: data.on_time_delivery ?? '100%',
+        });
+        return;
+      }
+    } catch (e) {}
+
+    // Fallback: API
     fetchWithAuth<{ stats?: typeof heroStats }>('/catalog/hero-stats')
-      .then((data) => {
-        if (data.stats) setHeroStats(data.stats);
+      .then((data) => { if (data.stats) setHeroStats(data.stats); })
+      .catch((err) => console.log('Hero stats fallback active:', err.message || err));
+  };
+
+  useEffect(() => {
+    loadHeroStats();
+
+    // Realtime: hero_stats table changes → update stats on home page
+    const channel = supabase
+      .channel('home_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hero_stats' }, (payload) => {
+        if (payload.new) {
+          const d: any = payload.new;
+          setHeroStats({
+            clientProjects: d.client_projects ?? '24 Active',
+            leadCrmWon: d.lead_crm_won ?? '₹14,85,000',
+            maintenanceRenewals: d.maintenance_renewals ?? '98% On Time',
+            leadsGenerated: d.leads_generated ?? '100+',
+            activeRetainers: d.active_retainers ?? '30+',
+            uptimeSecurity: d.uptime_security ?? '99.9%',
+            onTimeDelivery: d.on_time_delivery ?? '100%',
+          });
+        }
       })
-      .catch((err) => console.log('Hero stats default fallbacks active:', err.message || err));
+      .subscribe();
 
-    // Supabase Realtime live sync for hero stats & metrics banner
-    const channel = subscribeToRealtimeTable('hero_stats', (payload) => {
-      if (payload.new) setHeroStats((prev) => ({ ...prev, ...payload.new }));
-    });
-
-    return () => {
-      channel.unsubscribe();
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
   return (
     <div className="bg-[#090a0c] text-white min-h-screen relative overflow-hidden">
