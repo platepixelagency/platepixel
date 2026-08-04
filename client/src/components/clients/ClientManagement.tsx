@@ -61,7 +61,7 @@ export const ClientManagement: React.FC = () => {
 
   // Quick Invoice Form State
   const [invoiceForm, setInvoiceForm] = useState({
-    invoiceNumber: `INV-${Math.floor(1000 + Math.random() * 9000)}`,
+    invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     amount: '499',
     dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
     description: 'Web development & retainer service fee',
@@ -261,10 +261,8 @@ export const ClientManagement: React.FC = () => {
     setSubmitting(true);
 
     try {
-      // ✅ PRIMARY: Direct Supabase insert
-      const invoiceId = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      // ✅ PRIMARY: Direct Supabase insert (no custom id — let Supabase auto-generate UUID)
       const { error } = await supabase.from('invoices').insert({
-        id: invoiceId,
         client_id: invoiceModalClient.id,
         invoice_number: invoiceForm.invoiceNumber,
         amount: parseFloat(invoiceForm.amount) || 0,
@@ -272,9 +270,9 @@ export const ClientManagement: React.FC = () => {
       });
       if (error) throw new Error(error.message);
 
-      alert(`Invoice ${invoiceForm.invoiceNumber} generated for ${invoiceModalClient.companyName}!`);
+      alert(`✅ Invoice ${invoiceForm.invoiceNumber} generated for ${invoiceModalClient.companyName}!`);
       setInvoiceModalClient(null);
-      setInvoiceForm({ invoiceNumber: `INV-${Math.floor(1000 + Math.random() * 9000)}`, amount: '499', dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], description: 'Web development & retainer service fee' });
+      setInvoiceForm({ invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`, amount: '499', dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], description: 'Web development & retainer service fee' });
       loadClients();
     } catch (err: any) {
       // Fallback to API
@@ -297,19 +295,18 @@ export const ClientManagement: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const fileLink = docForm.fileUrl.trim() || `https://platepixel.agency/contracts/${encodeURIComponent(docForm.fileName)}`;
-      const docId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const fileLink = docForm.fileUrl.trim();
+      if (!fileLink) throw new Error('Please enter a valid file URL or Google Drive link.');
 
-      // ✅ PRIMARY: Direct Supabase insert
+      // ✅ PRIMARY: Direct Supabase insert (no custom id — let Supabase auto-generate UUID)
       const { error } = await supabase.from('documents').insert({
-        id: docId,
         client_id: docModalClient.id,
         file_name: docForm.fileName,
         file_url: fileLink,
       });
       if (error) throw new Error(error.message);
 
-      alert(`Document "${docForm.fileName}" saved for ${docModalClient.companyName}!`);
+      alert(`✅ Document "${docForm.fileName}" saved for ${docModalClient.companyName}!`);
       setDocModalClient(null);
       setDocForm({ docType: 'Change Request Agreement (CRA)', fileName: 'Change Request Agreement (CRA).pdf', fileUrl: '' });
       loadClients();
@@ -946,8 +943,8 @@ export const ClientManagement: React.FC = () => {
             </div>
 
             <div className="bg-[#090a0c] p-4 rounded-xl border border-[#4a4b50]/50 text-left text-xs font-mono space-y-2">
-              <div><span className="text-[#95979e]">Portal Login:</span> <span className="text-white font-bold">{createdCredentials.credentials?.email}</span></div>
-              <div><span className="text-[#95979e]">Temporary Password:</span> <span className="text-emerald-400 font-bold">{createdCredentials.credentials?.password}</span></div>
+              <div><span className="text-[#95979e]">Portal Login:</span> <span className="text-white font-bold">{createdCredentials.userCredentials?.email || createdCredentials.credentials?.email}</span></div>
+              <div><span className="text-[#95979e]">Temp Password:</span> <span className="text-emerald-400 font-bold">{createdCredentials.userCredentials?.temporaryPassword || createdCredentials.credentials?.password}</span></div>
             </div>
 
             <button

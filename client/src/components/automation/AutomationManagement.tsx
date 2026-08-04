@@ -12,7 +12,9 @@ import {
   Sparkles, 
   Cpu, 
   ArrowRight,
-  Bell
+  Bell,
+  PhoneCall,
+  MessageSquare
 } from 'lucide-react';
 
 interface AutomationLogItem {
@@ -30,10 +32,10 @@ export const AutomationManagement: React.FC = () => {
   const [scanning, setScanning] = useState<boolean>(false);
   const [scanResult, setScanResult] = useState<string>('');
 
-  // Test Email State
-  const [testEmail, setTestEmail] = useState<string>('');
-  const [testType, setTestType] = useState<string>('WELCOME');
-  const [testing, setTesting] = useState<boolean>(false);
+  // WhatsApp Test State
+  const [waPhone, setWaPhone] = useState<string>('');
+  const [waType, setWaType] = useState<string>('WELCOME');
+  const [waSending, setWaSending] = useState<boolean>(false);
 
   const loadLogs = async (silent = false) => {
     try {
@@ -69,23 +71,29 @@ export const AutomationManagement: React.FC = () => {
     }
   };
 
-  const handleSendTestEmail = async (e: React.FormEvent) => {
+  const handleSendWhatsApp = (e: React.FormEvent) => {
     e.preventDefault();
-    setTesting(true);
+    setWaSending(true);
 
-    try {
-      await fetchWithAuth('/automation/test-email', {
-        method: 'POST',
-        body: JSON.stringify({ email: testEmail, type: testType }),
-      });
-      alert(`Test ${testType} automation email dispatched to ${testEmail || 'client@platepixel.com'}`);
-      setTestEmail('');
-      loadLogs();
-    } catch (err: any) {
-      alert(err.message || 'Failed to send test email');
-    } finally {
-      setTesting(false);
-    }
+    const phone = waPhone.trim().replace(/\D/g, '');
+    const messages: Record<string, string> = {
+      WELCOME:
+        `🎉 Welcome to PlatePixel Agency!\n\nYour digital presence is now in expert hands. Our team will reach out shortly to kickstart your project.\n\nFor any queries, reply to this message.\n\n— PlatePixel Agency 🚀`,
+      INVOICE_REMINDER:
+        `📋 Invoice Reminder from PlatePixel Agency\n\nThis is a gentle reminder that your invoice is due. Please arrange payment at your earliest convenience.\n\nThank you for your prompt response!\n\n— PlatePixel Agency`,
+      RENEWAL_WARNING:
+        `⚠️ Domain / Hosting Renewal Alert!\n\nYour website hosting or domain renewal is coming up soon. Please renew to avoid any downtime.\n\nContact us if you need help.\n— PlatePixel Agency`,
+      PROJECT_COMPLETION:
+        `✅ Project Update from PlatePixel Agency\n\nGreat news! Your project milestone has been completed. Please review and share your feedback.\n\n— PlatePixel Agency 🎯`,
+    };
+
+    const msg = encodeURIComponent(messages[waType] || messages['WELCOME']);
+    const url = phone.length >= 10
+      ? `https://wa.me/${phone}?text=${msg}`
+      : `https://wa.me/?text=${msg}`;
+
+    window.open(url, '_blank');
+    setTimeout(() => setWaSending(false), 1000);
   };
 
   const getTemplateBadge = (type: string) => {
@@ -158,36 +166,40 @@ export const AutomationManagement: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 3: Test Email Dispatcher */}
-        <div className="huly-card p-6 flex flex-col justify-between">
+        {/* Card 3: WhatsApp Notification Sender */}
+        <div className="huly-card p-6 flex flex-col justify-between border-green-500/30 bg-green-500/5">
           <div>
-            <span className="tag-pill bg-purple-500/20 text-purple-400 font-mono text-[10px] uppercase">Notification Tester</span>
-            <h3 className="text-xl font-bold text-white mt-2">Send Test Notification</h3>
-            <form onSubmit={handleSendTestEmail} className="mt-3 space-y-3 text-xs">
+            <span className="tag-pill bg-green-500/20 text-green-400 font-mono text-[10px] uppercase">WhatsApp Notifier</span>
+            <h3 className="text-xl font-bold text-white mt-2 flex items-center space-x-2">
+              <PhoneCall className="w-5 h-5 text-green-400" />
+              <span>Send WhatsApp Alert</span>
+            </h3>
+            <p className="text-xs text-[#95979e] mt-1">Send a pre-built notification message directly to a client's WhatsApp number.</p>
+            <form onSubmit={handleSendWhatsApp} className="mt-3 space-y-3 text-xs">
               <input
-                type="email"
-                required
-                value={testEmail}
-                onChange={(e) => setTestEmail(e.target.value)}
-                placeholder="test@client.com"
+                type="tel"
+                value={waPhone}
+                onChange={(e) => setWaPhone(e.target.value)}
+                placeholder="+91 98765 43210 (with country code)"
                 className="huly-input"
               />
               <select
-                value={testType}
-                onChange={(e) => setTestType(e.target.value)}
+                value={waType}
+                onChange={(e) => setWaType(e.target.value)}
                 className="huly-input"
               >
-                <option value="WELCOME">Welcome Email</option>
-                <option value="INVOICE_REMINDER">Invoice Reminder</option>
-                <option value="RENEWAL_WARNING">Renewal Warning</option>
-                <option value="PROJECT_COMPLETION">Project Completion Alert</option>
+                <option value="WELCOME">🎉 Welcome Message</option>
+                <option value="INVOICE_REMINDER">📋 Invoice Reminder</option>
+                <option value="RENEWAL_WARNING">⚠️ Renewal Warning</option>
+                <option value="PROJECT_COMPLETION">✅ Project Completion</option>
               </select>
               <button
                 type="submit"
-                disabled={testing}
-                className="btn-pill-secondary w-full py-2 text-xs text-[#5683da]"
+                disabled={waSending}
+                className="btn-pill-primary w-full py-2.5 text-xs flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-500"
               >
-                {testing ? 'Dispatching...' : 'Dispatch Test Email'}
+                <PhoneCall className="w-4 h-4" />
+                <span>{waSending ? 'Opening WhatsApp…' : 'Send via WhatsApp'}</span>
               </button>
             </form>
           </div>
