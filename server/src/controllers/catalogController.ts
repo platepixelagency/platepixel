@@ -15,16 +15,16 @@ export let currentHeroStats = {
 
 export const getHeroStats = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const { data } = await supabase.from('hero_stats').select('*').eq('id', 'main').maybeSingle();
+    const { data } = await supabase.from('hero_stats').select('*').eq('id', 1).maybeSingle();
     if (data) {
       currentHeroStats = {
-        clientProjects: data.clientProjects || data.client_projects || currentHeroStats.clientProjects,
-        leadCrmWon: data.leadCrmWon || data.lead_crm_won || currentHeroStats.leadCrmWon,
-        maintenanceRenewals: data.maintenanceRenewals || data.maintenance_renewals || currentHeroStats.maintenanceRenewals,
-        leadsGenerated: data.leadsGenerated || data.leads_generated || currentHeroStats.leadsGenerated,
-        activeRetainers: data.activeRetainers || data.active_retainers || currentHeroStats.activeRetainers,
-        uptimeSecurity: data.uptimeSecurity || data.uptime_security || currentHeroStats.uptimeSecurity,
-        onTimeDelivery: data.onTimeDelivery || data.on_time_delivery || currentHeroStats.onTimeDelivery,
+        clientProjects: data.client_projects || currentHeroStats.clientProjects,
+        leadCrmWon: data.lead_crm_won || currentHeroStats.leadCrmWon,
+        maintenanceRenewals: data.maintenance_renewals || currentHeroStats.maintenanceRenewals,
+        leadsGenerated: data.leads_generated || currentHeroStats.leadsGenerated,
+        activeRetainers: data.active_retainers || currentHeroStats.activeRetainers,
+        uptimeSecurity: data.uptime_security || currentHeroStats.uptimeSecurity,
+        onTimeDelivery: data.on_time_delivery || currentHeroStats.onTimeDelivery,
       };
     }
   } catch (err) {
@@ -45,7 +45,16 @@ export const updateHeroStats = async (req: Request, res: Response): Promise<void
     if (onTimeDelivery) currentHeroStats.onTimeDelivery = onTimeDelivery;
 
     try {
-      await supabase.from('hero_stats').upsert({ id: 'main', ...currentHeroStats });
+      await supabase.from('hero_stats').update({
+        client_projects: currentHeroStats.clientProjects,
+        lead_crm_won: currentHeroStats.leadCrmWon,
+        maintenance_renewals: currentHeroStats.maintenanceRenewals,
+        leads_generated: currentHeroStats.leadsGenerated,
+        active_retainers: currentHeroStats.activeRetainers,
+        uptime_security: currentHeroStats.uptimeSecurity,
+        on_time_delivery: currentHeroStats.onTimeDelivery,
+        updated_at: new Date().toISOString(),
+      }).eq('id', 1);
     } catch (supaErr: any) {
       console.error('Supabase hero_stats sync notice:', supaErr);
     }
@@ -76,9 +85,24 @@ export let currentSiteSettings = {
 
 export const getSiteSettings = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const { data } = await supabase.from('site_settings').select('*').eq('id', 'main').maybeSingle();
+    const { data } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle();
     if (data) {
-      currentSiteSettings = { ...currentSiteSettings, ...data };
+      currentSiteSettings = {
+        supportEmail: data.support_email ?? currentSiteSettings.supportEmail,
+        supportPhone: data.support_phone ?? currentSiteSettings.supportPhone,
+        officeLocation: data.office_location ?? currentSiteSettings.officeLocation,
+        twitterUrl: data.twitter_url ?? currentSiteSettings.twitterUrl,
+        twitterVisible: data.twitter_visible ?? currentSiteSettings.twitterVisible,
+        facebookUrl: data.facebook_url ?? currentSiteSettings.facebookUrl,
+        facebookVisible: data.facebook_visible ?? currentSiteSettings.facebookVisible,
+        instagramUrl: data.instagram_url ?? currentSiteSettings.instagramUrl,
+        instagramVisible: data.instagram_visible ?? currentSiteSettings.instagramVisible,
+        githubUrl: data.github_url ?? currentSiteSettings.githubUrl,
+        githubVisible: data.github_visible ?? currentSiteSettings.githubVisible,
+        whatsappUrl: data.whatsapp_url ?? currentSiteSettings.whatsappUrl,
+        whatsappVisible: data.whatsapp_visible ?? currentSiteSettings.whatsappVisible,
+        showSocialBar: data.show_social_bar ?? currentSiteSettings.showSocialBar,
+      };
     }
   } catch (err) {
     // Ignore read error
@@ -114,7 +138,23 @@ export const updateSiteSettings = async (req: Request, res: Response): Promise<v
     if (showSocialBar !== undefined) currentSiteSettings.showSocialBar = showSocialBar;
 
     try {
-      await supabase.from('site_settings').upsert({ id: 'main', ...currentSiteSettings });
+      await supabase.from('site_settings').update({
+        support_email: currentSiteSettings.supportEmail,
+        support_phone: currentSiteSettings.supportPhone,
+        office_location: currentSiteSettings.officeLocation,
+        twitter_url: currentSiteSettings.twitterUrl,
+        twitter_visible: currentSiteSettings.twitterVisible,
+        facebook_url: currentSiteSettings.facebookUrl,
+        facebook_visible: currentSiteSettings.facebookVisible,
+        instagram_url: currentSiteSettings.instagramUrl,
+        instagram_visible: currentSiteSettings.instagramVisible,
+        github_url: currentSiteSettings.githubUrl,
+        github_visible: currentSiteSettings.githubVisible,
+        whatsapp_url: currentSiteSettings.whatsappUrl,
+        whatsapp_visible: currentSiteSettings.whatsappVisible,
+        show_social_bar: currentSiteSettings.showSocialBar,
+        updated_at: new Date().toISOString(),
+      }).eq('id', 1);
     } catch (supaErr: any) {
       console.error('Supabase site_settings sync notice:', supaErr);
     }
