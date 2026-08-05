@@ -79,6 +79,41 @@ export const Contact: React.FC = () => {
     setError('');
     setSubmitting(true);
 
+    const leadPayload = {
+      name: name.trim(),
+      business_name: businessName.trim() || `${name.trim()}'s Business`,
+      mobile: mobile.trim(),
+      email: email.toLowerCase().trim(),
+      category,
+      service,
+      budget,
+      message: message.trim(),
+      status: 'NEW',
+    };
+
+    try {
+      // ✅ PRIMARY: Direct Supabase insert (triggers Realtime in Lead CRM instantly)
+      const { data: supaLead, error: supaErr } = await supabase
+        .from('leads')
+        .insert(leadPayload)
+        .select('*')
+        .single();
+
+      if (!supaErr && supaLead) {
+        setSuccessLead({
+          id: supaLead.id,
+          name: supaLead.name,
+          businessName: supaLead.business_name,
+          service: supaLead.service,
+          budget: supaLead.budget,
+        });
+        return;
+      }
+    } catch (supaErr) {
+      console.warn('[Contact] Supabase direct insert notice:', supaErr);
+    }
+
+    // 🔄 FALLBACK: API
     try {
       const data = await fetchWithAuth<{ lead: any }>('/leads', {
         method: 'POST',

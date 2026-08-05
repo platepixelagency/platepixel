@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Globe, 
@@ -19,11 +19,118 @@ import {
   Boxes,
   ArrowRight,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { Footer } from '../components/Footer';
+import { supabase, subscribeToRealtimeTable } from '../services/supabase';
+
+interface ServiceItem {
+  id: string;
+  title: string;
+  category: string;
+  price: string;
+  description: string;
+  features: string[];
+  isPopular: boolean;
+}
+
+const DEFAULT_SERVICES: ServiceItem[] = [
+  {
+    id: '1',
+    title: 'Restaurant Website & QR Menu',
+    category: 'Food & Hospitality',
+    price: '₹24,999',
+    description: 'Interactive digital menu with QR code scan, online table reservation, Google maps integration, and WhatsApp ordering.',
+    features: ['Live QR Menu Engine', 'Table Booking System', 'WhatsApp Order Direct', 'Google Maps Sync'],
+    isPopular: true,
+  },
+  {
+    id: '2',
+    title: 'Business Website',
+    category: 'Website Development',
+    price: '₹14,999',
+    description: 'Professional 5-page business site with services showcase, client testimonials, lead capture form, and mobile optimization.',
+    features: ['5 Custom Pages', 'Mobile Responsive', 'Lead Intake Form', 'SEO Setup'],
+    isPopular: false,
+  },
+  {
+    id: '3',
+    title: 'Wedding Website',
+    category: 'Event Sites',
+    price: '₹19,999',
+    description: 'Elegant wedding event site with RSVP tracker, photo gallery, event itinerary, venue maps, and gift registry.',
+    features: ['RSVP Guest Tracker', 'Photo & Video Gallery', 'Event Timeline', 'Venue Maps'],
+    isPopular: false,
+  },
+  {
+    id: '4',
+    title: 'Portfolio Website',
+    category: 'Branding',
+    price: '₹14,999',
+    description: 'Sleek personal branding portfolio for creators, consultants, designers, and freelancers to win high-ticket clients.',
+    features: ['Project Showcase', 'Client Testimonials', 'Booking Integration', 'Contact Intake'],
+    isPopular: false,
+  },
+  {
+    id: '5',
+    title: 'School Website',
+    category: 'Education',
+    price: '₹29,999',
+    description: 'Educational institute portal with course catalog, notice board, online inquiry form, and parent information hub.',
+    features: ['Online Admission Intake', 'Digital Notice Board', 'Faculty Directory', 'Event Calendar'],
+    isPopular: false,
+  },
+  {
+    id: '6',
+    title: 'Growth Retainer',
+    category: 'Maintenance & Support',
+    price: '₹2,999 / mo',
+    description: 'Continuous monthly web maintenance, automated daily backups, SSL renewal, content edits, and performance audits.',
+    features: ['Managed Hosting Included', '24/7 Security Patches', 'SSL Certificate', 'Unlimited Content Updates'],
+    isPopular: true,
+  },
+];
 
 export const Services: React.FC = () => {
+  const [services, setServices] = useState<ServiceItem[]>(DEFAULT_SERVICES);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const loadServices = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const { data, error } = await supabase
+        .from('agency_services')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const mapped: ServiceItem[] = data.map((s: any) => ({
+          id: s.id,
+          title: s.title || 'Agency Service',
+          category: s.category || 'Website Development',
+          price: s.price || '₹14,999',
+          description: s.description || '',
+          features: s.features ? (typeof s.features === 'string' ? s.features.split(',').map((f: string) => f.trim()) : s.features) : [],
+          isPopular: s.is_popular ?? false,
+        }));
+        setServices(mapped);
+      }
+    } catch (err) {
+      console.warn('[Services] Failed to load from Supabase:', err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadServices();
+    const channel = subscribeToRealtimeTable('agency_services', () => loadServices(true));
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
+
   return (
     <div className="bg-[#090a0c] text-white min-h-screen relative overflow-hidden">
       {/* Background Glow */}
@@ -44,107 +151,85 @@ export const Services: React.FC = () => {
         </p>
       </section>
 
-      {/* Category 1: Starter Services */}
+      {/* Dynamic Services Grid from Supabase */}
       <section className="py-12 px-6 max-w-7xl mx-auto relative z-10">
-        <div className="flex items-center space-x-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-[#5683da]/10 text-[#5683da] flex items-center justify-center font-bold">
-            01
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-[#5683da]/10 text-[#5683da] flex items-center justify-center font-bold">
+              01
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Agency Core Services</h2>
+              <p className="text-xs text-[#95979e]">Turnkey digital presence optimized for quick turnarounds and high conversion.</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white">Starter Website Packages</h2>
-            <p className="text-xs text-[#95979e]">Turnkey digital presence optimized for quick turnarounds and high conversion.</p>
-          </div>
+          <span className="text-xs font-mono text-[#5683da] bg-[#5683da]/10 px-3 py-1 rounded-full">
+            {services.length} Live Offerings
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="huly-card p-6 flex flex-col justify-between">
-            <div>
-              <Utensils className="w-8 h-8 text-[#ff8964] mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Restaurant & QR Menu Site</h3>
-              <p className="text-xs text-[#95979e] mb-4">
-                Interactive digital menu with QR code scan, online table reservation, Google maps integration, and WhatsApp ordering.
-              </p>
-            </div>
-            <Link to="/contact?service=Restaurant Website" className="btn-pill-secondary text-xs text-center py-2">
-              Select Package
-            </Link>
-          </div>
+          {services.map((svc) => (
+            <div
+              key={svc.id}
+              className={`huly-card p-6 flex flex-col justify-between relative transition-all duration-300 ${
+                svc.isPopular ? 'border-[#ff8964] shadow-[0_0_25px_rgba(255,137,100,0.15)] bg-[#ff8964]/5' : ''
+              }`}
+            >
+              {svc.isPopular && (
+                <div className="absolute -top-3.5 right-6 tag-pill bg-[#ff8964] text-black font-bold text-[10px] uppercase shadow-md">
+                  POPULAR CHOICE
+                </div>
+              )}
 
-          <div className="huly-card p-6 flex flex-col justify-between">
-            <div>
-              <Globe className="w-8 h-8 text-[#5683da] mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Business Website</h3>
-              <p className="text-xs text-[#95979e] mb-4">
-                Professional 5-page business site with services showcase, client testimonials, lead capture form, and mobile optimization.
-              </p>
-            </div>
-            <Link to="/contact?service=Business Website" className="btn-pill-secondary text-xs text-center py-2">
-              Select Package
-            </Link>
-          </div>
+              <div>
+                <span className="tag-pill bg-[#5683da]/20 text-[#5683da] text-[10px] font-mono uppercase mb-3 inline-block">
+                  {svc.category}
+                </span>
+                <h3 className="text-xl font-bold text-white mb-2">{svc.title}</h3>
+                <p className="text-xs text-[#95979e] mb-4 leading-relaxed">
+                  {svc.description}
+                </p>
 
-          <div className="huly-card p-6 flex flex-col justify-between">
-            <div>
-              <Heart className="w-8 h-8 text-pink-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Wedding & Event Site</h3>
-              <p className="text-xs text-[#95979e] mb-4">
-                Elegant wedding event site with RSVP tracker, photo gallery, event itinerary, venue maps, and gift registry.
-              </p>
-            </div>
-            <Link to="/contact?service=Wedding Website" className="btn-pill-secondary text-xs text-center py-2">
-              Select Package
-            </Link>
-          </div>
+                {svc.features && svc.features.length > 0 && (
+                  <div className="space-y-1.5 mb-6 text-xs text-white">
+                    {svc.features.map((f, i) => (
+                      <div key={i} className="flex items-center space-x-2">
+                        <CheckCircle2 className={`w-3.5 h-3.5 flex-shrink-0 ${svc.isPopular ? 'text-[#ff8964]' : 'text-[#5683da]'}`} />
+                        <span>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-          <div className="huly-card p-6 flex flex-col justify-between">
-            <div>
-              <UserCheck className="w-8 h-8 text-emerald-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Portfolio Website</h3>
-              <p className="text-xs text-[#95979e] mb-4">
-                Sleek personal branding portfolio for creators, consultants, designers, and freelancers to win high-ticket clients.
-              </p>
+              <div>
+                <div className="mb-4 flex items-center justify-between border-t border-[#4a4b50]/40 pt-4">
+                  <span className="text-xs text-[#95979e] font-mono">Investment:</span>
+                  <span className="text-lg font-extrabold text-emerald-400 font-mono">{svc.price}</span>
+                </div>
+                <Link
+                  to={`/contact?service=${encodeURIComponent(svc.title)}`}
+                  className={`w-full py-2.5 text-xs text-center block transition-all ${
+                    svc.isPopular ? 'btn-pill-primary' : 'btn-pill-secondary'
+                  }`}
+                >
+                  Select Package
+                </Link>
+              </div>
             </div>
-            <Link to="/contact?service=Portfolio Website" className="btn-pill-secondary text-xs text-center py-2">
-              Select Package
-            </Link>
-          </div>
-
-          <div className="huly-card p-6 flex flex-col justify-between">
-            <div>
-              <GraduationCap className="w-8 h-8 text-amber-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">School & Academy Site</h3>
-              <p className="text-xs text-[#95979e] mb-4">
-                Educational institute portal with course catalog, notice board, online inquiry form, and parent/student information.
-              </p>
-            </div>
-            <Link to="/contact?service=School Website" className="btn-pill-secondary text-xs text-center py-2">
-              Select Package
-            </Link>
-          </div>
-
-          <div className="huly-card p-6 flex flex-col justify-between border-[#5683da]/40 bg-[#5683da]/5">
-            <div>
-              <QrCode className="w-8 h-8 text-[#5683da] mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Custom Starter Package</h3>
-              <p className="text-xs text-[#95979e] mb-4">
-                Need something unique? We design custom starter websites tailored precisely to your brand assets and objectives.
-              </p>
-            </div>
-            <Link to="/contact?service=Custom Starter" className="btn-pill-primary text-xs text-center py-2">
-              Get Custom Quote
-            </Link>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* Category 2: Monthly Retainers */}
+      {/* Category 2: Monthly Retainers & Features */}
       <section className="py-12 px-6 max-w-7xl mx-auto relative z-10">
         <div className="flex items-center space-x-3 mb-8">
           <div className="w-10 h-10 rounded-xl bg-[#ff8964]/10 text-[#ff8964] flex items-center justify-center font-bold">
             02
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">Monthly Retainers & Growth Services</h2>
+            <h2 className="text-2xl font-bold text-white">Monthly Retainers & Growth Features</h2>
             <p className="text-xs text-[#95979e]">Continuous care, search engine growth, and automated lead capture.</p>
           </div>
         </div>

@@ -1,11 +1,116 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle, Sparkles, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
 import { Footer } from '../components/Footer';
+import { supabase, subscribeToRealtimeTable } from '../services/supabase';
+
+interface PricingPlan {
+  id: string;
+  title: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  highlighted: boolean;
+  tag?: string;
+  buttonText?: string;
+}
+
+const DEFAULT_PLANS: PricingPlan[] = [
+  {
+    id: 'starter',
+    title: 'Starter Website',
+    price: '₹14,999',
+    period: 'one-time investment',
+    description: 'Ideal for local businesses, restaurants, portfolios, and event sites needing a fast launch.',
+    features: [
+      '5-Page Mobile Responsive Design',
+      'QR Menu / Catalog Integration',
+      'WhatsApp & Direct Lead Capture',
+      'Google Maps & SEO Setup',
+      'Delivery in 7-10 Business Days',
+    ],
+    highlighted: false,
+    tag: 'One-Time Build',
+    buttonText: 'Choose Starter Plan',
+  },
+  {
+    id: 'growth',
+    title: 'Growth & Care',
+    price: '₹2,999',
+    period: '/ month',
+    description: 'Complete hands-free maintenance, hosting, SEO monitoring, and security care.',
+    features: [
+      '24/7 Hosting & Domain Management',
+      'Monthly Content & Image Updates',
+      'Local SEO & Google Business Rank',
+      'AI Chatbot Lead Capture',
+      'Client Portal Dashboard Access',
+    ],
+    highlighted: true,
+    tag: 'Monthly Retainer',
+    buttonText: 'Start Monthly Retainer',
+  },
+  {
+    id: 'custom',
+    title: 'Custom Web App',
+    price: '₹49,999+',
+    period: 'scoped build',
+    description: 'Tailor-made web applications, CRMs, ordering engines, and inventory systems.',
+    features: [
+      'Custom React / Express Architecture',
+      'Role-Based Client & Admin Dashboards',
+      'Database & REST API Engineering',
+      'Payment Gateway & Invoicing System',
+      'Dedicated Support SLA',
+    ],
+    highlighted: false,
+    tag: 'Enterprise Custom',
+    buttonText: 'Request App Scope',
+  },
+];
 
 export const Pricing: React.FC = () => {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [plans, setPlans] = useState<PricingPlan[]>(DEFAULT_PLANS);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+
+  const loadPricing = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const { data, error } = await supabase
+        .from('agency_pricing')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const mapped: PricingPlan[] = data.map((p: any) => ({
+          id: p.id,
+          title: p.title || 'Custom Plan',
+          price: p.price || 'Contact',
+          period: p.period || 'per month',
+          description: p.description || '',
+          features: p.features ? (typeof p.features === 'string' ? p.features.split(',').map((f: string) => f.trim()) : p.features) : [],
+          highlighted: p.highlighted ?? false,
+          tag: p.period === 'one-time' ? 'One-Time Package' : 'Retainer Plan',
+          buttonText: p.highlighted ? 'Start Growth Retainer' : `Select ${p.title}`,
+        }));
+        setPlans(mapped);
+      }
+    } catch (err) {
+      console.warn('[Pricing] Failed to load from Supabase:', err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPricing();
+    const channel = subscribeToRealtimeTable('agency_pricing', () => loadPricing(true));
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
 
   const handleSelectPlan = (planName: string) => {
     navigate(`/contact?service=${encodeURIComponent(planName)}`);
@@ -35,149 +140,53 @@ export const Pricing: React.FC = () => {
       {/* Pricing Cards Grid */}
       <section className="py-8 px-6 max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          {/* Plan 1: Starter Package */}
-          <div className="huly-card p-8 flex flex-col justify-between">
-            <div>
-              <span className="tag-pill bg-[#5683da]/20 text-[#5683da] text-[10px] font-mono uppercase">One-Time Build</span>
-              <h3 className="text-2xl font-bold text-white mt-3">Starter Website</h3>
-              <p className="text-xs text-[#95979e] mt-1 mb-6">
-                Ideal for local businesses, restaurants, portfolios, and event sites needing a fast launch.
-              </p>
-
-              <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">₹14,999</span>
-                <span className="text-xs text-[#95979e] ml-2">one-time investment</span>
-              </div>
-
-              <div className="space-y-3 text-xs text-[#95979e] mb-8">
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#5683da]" />
-                  <span>5-Page Mobile Responsive Design</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#5683da]" />
-                  <span>QR Menu / Catalog Integration</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#5683da]" />
-                  <span>WhatsApp & Direct Lead Capture</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#5683da]" />
-                  <span>Google Maps & SEO Setup</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-4 h-4 text-[#5683da]" />
-                  <span>Delivery in 7-10 Business Days</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleSelectPlan('Starter Website (₹14,999)')}
-              className="btn-pill-secondary w-full py-3 text-xs text-center"
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className={`huly-card p-8 flex flex-col justify-between relative transition-all duration-300 ${
+                plan.highlighted ? 'border-[#ff8964] shadow-[0_0_30px_rgba(255,137,100,0.15)] bg-[#ff8964]/5' : ''
+              }`}
             >
-              Choose Starter Plan
-            </button>
-          </div>
+              {plan.highlighted && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 tag-pill bg-[#ff8964] text-black font-bold text-[10px] uppercase shadow-md whitespace-nowrap">
+                  MOST POPULAR GROWTH PLAN
+                </div>
+              )}
 
-          {/* Plan 2: Monthly Retainer (Featured) */}
-          <div className="huly-card p-8 flex flex-col justify-between border-[#ff8964] relative shadow-[0_0_30px_rgba(255,137,100,0.15)]">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 tag-pill bg-[#ff8964] text-black font-bold text-[10px] uppercase shadow-md">
-              MOST POPULAR GROWTH PLAN
+              <div>
+                <span className={`tag-pill text-[10px] font-mono uppercase ${plan.highlighted ? 'bg-[#ff8964]/20 text-[#ff8964]' : 'bg-[#5683da]/20 text-[#5683da]'}`}>
+                  {plan.tag || (plan.highlighted ? 'Monthly Retainer' : 'Website Package')}
+                </span>
+                <h3 className="text-2xl font-bold text-white mt-3">{plan.title}</h3>
+                <p className="text-xs text-[#95979e] mt-1 mb-6 leading-relaxed">
+                  {plan.description}
+                </p>
+
+                <div className="mb-6">
+                  <span className="text-4xl font-extrabold text-white">{plan.price}</span>
+                  <span className="text-xs text-[#95979e] ml-2 font-mono">{plan.period}</span>
+                </div>
+
+                <div className="space-y-3 text-xs text-[#95979e] mb-8">
+                  {plan.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center space-x-2 text-white">
+                      <CheckCircle className={`w-4 h-4 flex-shrink-0 ${plan.highlighted ? 'text-[#ff8964]' : 'text-[#5683da]'}`} />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleSelectPlan(`${plan.title} (${plan.price})`)}
+                className={`w-full py-3 text-xs text-center transition-all ${
+                  plan.highlighted ? 'btn-pill-primary' : 'btn-pill-secondary'
+                }`}
+              >
+                {plan.buttonText || `Choose ${plan.title}`}
+              </button>
             </div>
-
-            <div>
-              <span className="tag-pill bg-[#ff8964]/20 text-[#ff8964] text-[10px] font-mono uppercase">Monthly Retainer</span>
-              <h3 className="text-2xl font-bold text-white mt-3">Growth & Care</h3>
-              <p className="text-xs text-[#95979e] mt-1 mb-6">
-                Complete hands-free maintenance, hosting, SEO monitoring, and security care.
-              </p>
-
-              <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">₹2,999</span>
-                <span className="text-xs text-[#95979e] ml-2">/ month</span>
-              </div>
-
-              <div className="space-y-3 text-xs text-[#95979e] mb-8">
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#ff8964]" />
-                  <span>24/7 Hosting & Domain Management</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#ff8964]" />
-                  <span>Monthly Content & Image Updates</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#ff8964]" />
-                  <span>Local SEO & Google Business Rank</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#ff8964]" />
-                  <span>AI Chatbot Lead Capture</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-[#ff8964]" />
-                  <span>Client Portal Dashboard Access</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleSelectPlan('Growth Retainer (₹2,999/mo)')}
-              className="btn-pill-primary w-full py-3 text-xs text-center"
-            >
-              Start Monthly Retainer
-            </button>
-          </div>
-
-          {/* Plan 3: Premium Web App */}
-          <div className="huly-card p-8 flex flex-col justify-between">
-            <div>
-              <span className="tag-pill bg-emerald-500/20 text-emerald-400 text-[10px] font-mono uppercase">Enterprise Custom</span>
-              <h3 className="text-2xl font-bold text-white mt-3">Custom Web App</h3>
-              <p className="text-xs text-[#95979e] mt-1 mb-6">
-                Tailor-made web applications, CRMs, ordering engines, and inventory systems.
-              </p>
-
-              <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">₹49,999+</span>
-                <span className="text-xs text-[#95979e] ml-2">scoped build</span>
-              </div>
-
-              <div className="space-y-3 text-xs text-[#95979e] mb-8">
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Custom React / Express Architecture</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Role-Based Client & Admin Dashboards</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Database & REST API Engineering</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white">
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Payment Gateway & Invoicing System</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Dedicated Support SLA</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleSelectPlan('Custom Web App (₹49,999+)')}
-              className="btn-pill-secondary w-full py-3 text-xs text-center border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-            >
-              Request App Scope
-            </button>
-          </div>
-
+          ))}
         </div>
       </section>
 
@@ -212,3 +221,4 @@ export const Pricing: React.FC = () => {
     </div>
   );
 };
+

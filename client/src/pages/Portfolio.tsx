@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ExternalLink, ArrowRight, Star, Layers, Globe, Smartphone } from 'lucide-react';
+import { Sparkles, ExternalLink, ArrowRight, Star, Layers, Globe, Smartphone, RefreshCw } from 'lucide-react';
 import { Footer } from '../components/Footer';
+import { supabase, subscribeToRealtimeTable } from '../services/supabase';
 
 interface ProjectItem {
   id: string;
   title: string;
-  category: 'Restaurant' | 'SaaS' | 'Wedding' | 'School' | 'E-commerce';
+  category: string;
   clientName: string;
   description: string;
   imageUrl: string;
@@ -14,65 +15,105 @@ interface ProjectItem {
   metrics: string;
 }
 
+const DEFAULT_PROJECTS: ProjectItem[] = [
+  {
+    id: '1',
+    title: 'Apex Culinary Lounge & QR Menu',
+    category: 'Restaurant',
+    clientName: 'Apex Hospitality Group',
+    description: 'Modern dining restaurant portal equipped with real-time digital QR code menu, WhatsApp table reservation, and Google Maps integration.',
+    imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800',
+    tags: ['Restaurant Site', 'QR Menu', 'WhatsApp Ordering'],
+    metrics: '+340% Digital Menu Scans',
+  },
+  {
+    id: '2',
+    title: 'Horizon SaaS Platform Dashboard',
+    category: 'SaaS',
+    clientName: 'Horizon Technologies',
+    description: 'Full-stack web application featuring role-based client portal, subscription billing management, and real-time analytics.',
+    imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800',
+    tags: ['Custom Web App', 'React 19', 'Express API'],
+    metrics: '10k+ Monthly Active Users',
+  },
+  {
+    id: '3',
+    title: 'Aura Grand Weddings & RSVP Tracker',
+    category: 'Wedding',
+    clientName: 'Aura Event Studio',
+    description: 'Luxury wedding celebration website featuring guest RSVP tracking, digital invitation cards, photo gallery, and event itinerary.',
+    imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800',
+    tags: ['Wedding Site', 'RSVP Portal', 'Photo Gallery'],
+    metrics: '500+ RSVP Submissions',
+  },
+  {
+    id: '4',
+    title: 'St. Jude International School Portal',
+    category: 'School',
+    clientName: 'St. Jude Educational Trust',
+    description: 'Comprehensive academic institution website with online admission inquiry form, notice board, and parent information hub.',
+    imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800',
+    tags: ['School Site', 'Admission Form', 'Notice Board'],
+    metrics: '2.5k Students Enrolled',
+  },
+  {
+    id: '5',
+    title: 'Urban Wear Apparel Storefront',
+    category: 'E-commerce',
+    clientName: 'Urban Wear Co.',
+    description: 'Fast-loading mobile e-commerce store with product catalog filtering, cart checkout, and automated customer order notifications.',
+    imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800',
+    tags: ['E-commerce', 'Payment Gateway', 'Cart System'],
+    metrics: '₹12,40,000 Sales Generated',
+  },
+];
+
 export const Portfolio: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
+  const [projects, setProjects] = useState<ProjectItem[]>(DEFAULT_PROJECTS);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const projects: ProjectItem[] = [
-    {
-      id: '1',
-      title: 'Apex Culinary Lounge & QR Menu',
-      category: 'Restaurant',
-      clientName: 'Apex Hospitality Group',
-      description: 'Modern dining restaurant portal equipped with real-time digital QR code menu, WhatsApp table reservation, and Google Maps integration.',
-      imageUrl: '/portfolio/apex_restaurant.png',
-      tags: ['Restaurant Site', 'QR Menu', 'WhatsApp Ordering'],
-      metrics: '+340% Digital Menu Scans',
-    },
-    {
-      id: '2',
-      title: 'Horizon SaaS Platform Dashboard',
-      category: 'SaaS',
-      clientName: 'Horizon Technologies',
-      description: 'Full-stack web application featuring role-based client portal, subscription billing management, and real-time analytics.',
-      imageUrl: '/portfolio/horizon_saas.png',
-      tags: ['Custom Web App', 'React 19', 'Express API'],
-      metrics: '10k+ Monthly Active Users',
-    },
-    {
-      id: '3',
-      title: 'Aura Grand Weddings & RSVP Tracker',
-      category: 'Wedding',
-      clientName: 'Aura Event Studio',
-      description: 'Luxury wedding celebration website featuring guest RSVP tracking, digital invitation cards, photo gallery, and event itinerary.',
-      imageUrl: '/portfolio/aura_wedding.png',
-      tags: ['Wedding Site', 'RSVP Portal', 'Photo Gallery'],
-      metrics: '500+ RSVP Submissions',
-    },
-    {
-      id: '4',
-      title: 'St. Jude International School Portal',
-      category: 'School',
-      clientName: 'St. Jude Educational Trust',
-      description: 'Comprehensive academic institution website with online admission inquiry form, notice board, and parent information hub.',
-      imageUrl: '/portfolio/st_jude_school.png',
-      tags: ['School Site', 'Admission Form', 'Notice Board'],
-      metrics: '2.5k Students Enrolled',
-    },
-    {
-      id: '5',
-      title: 'Urban Wear Apparel Storefront',
-      category: 'E-commerce',
-      clientName: 'Urban Wear Co.',
-      description: 'Fast-loading mobile e-commerce store with product catalog filtering, cart checkout, and automated customer order notifications.',
-      imageUrl: '/portfolio/urban_wear.png',
-      tags: ['E-commerce', 'Payment Gateway', 'Cart System'],
-      metrics: '₹12,40,000 Sales Generated',
-    },
-  ];
+  const loadProjects = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const { data, error } = await supabase
+        .from('agency_portfolio')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const mapped: ProjectItem[] = data.map((p: any) => ({
+          id: p.id,
+          title: p.title || 'Untitled Showcase',
+          category: p.category || 'Web Application',
+          clientName: p.client_name || 'Agency Client',
+          description: p.description || `Custom digital web platform designed for ${p.client_name || 'our client'}.`,
+          imageUrl: p.image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800',
+          tags: p.tags ? (typeof p.tags === 'string' ? p.tags.split(',').map((t: string) => t.trim()) : p.tags) : ['Web App', 'Live Project'],
+          metrics: p.metrics || 'Live Platform',
+        }));
+        setProjects(mapped);
+      }
+    } catch (err) {
+      console.warn('[Portfolio] Failed to load from Supabase:', err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProjects();
+    const channel = subscribeToRealtimeTable('agency_portfolio', () => loadProjects(true));
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
+
+  const categories = ['ALL', ...Array.from(new Set(projects.map(p => p.category)))];
 
   const filteredProjects = activeCategory === 'ALL'
     ? projects
-    : projects.filter(p => p.category.toUpperCase() === activeCategory.toUpperCase());
+    : projects.filter(p => p.category.toUpperCase().includes(activeCategory.toUpperCase()));
 
   return (
     <div className="bg-[#090a0c] text-white min-h-screen relative overflow-hidden">
@@ -96,7 +137,7 @@ export const Portfolio: React.FC = () => {
 
         {/* Filter Pills */}
         <div className="flex flex-wrap justify-center gap-2 mt-8">
-          {['ALL', 'Restaurant', 'SaaS', 'Wedding', 'School', 'E-commerce'].map(cat => (
+          {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
@@ -124,8 +165,8 @@ export const Portfolio: React.FC = () => {
                   alt={project.title}
                   className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                   onError={(e) => {
-                    // Fallback to dark gradient if image load fails
-                    (e.target as HTMLElement).style.display = 'none';
+                    // Fallback to dark placeholder if image fails
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800';
                   }}
                 />
 
