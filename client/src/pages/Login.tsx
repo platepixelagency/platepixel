@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, ArrowRight, Lock, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [seedMessage, setSeedMessage] = useState('');
 
-  const { login, seedAdmin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSeedMessage('');
     setLoading(true);
 
     try {
@@ -24,22 +22,6 @@ export const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickSeedAdmin = async () => {
-    try {
-      setError('');
-      setSeedMessage('');
-      setLoading(true);
-      await seedAdmin();
-      setEmail('platepixelagency@gmail.com');
-      setPassword('Sonu@0431');
-      setSeedMessage('Admin credentials loaded! Click "Sign In to Workspace" to login.');
-    } catch (err: any) {
-      setError(err.message || 'Failed to seed admin user');
     } finally {
       setLoading(false);
     }
@@ -71,13 +53,6 @@ export const Login: React.FC = () => {
             <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start space-x-3 text-red-400 text-sm">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div>{error}</div>
-            </div>
-          )}
-
-          {seedMessage && (
-            <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start space-x-3 text-emerald-400 text-sm">
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <div>{seedMessage}</div>
             </div>
           )}
 
@@ -135,18 +110,6 @@ export const Login: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Helper */}
-          <div className="mt-6 pt-6 border-t border-[#4a4b50]/40 text-center">
-            <p className="text-xs text-[#95979e] mb-3">Testing for the first time?</p>
-            <button
-              type="button"
-              onClick={handleQuickSeedAdmin}
-              className="btn-pill-secondary w-full text-xs py-2 border-[#5683da]/40 text-[#5683da] hover:bg-[#5683da]/10"
-            >
-              ⚡ Create & Autofill Demo Admin Account
-            </button>
-          </div>
         </div>
 
         {/* Footer Link */}
@@ -160,3 +123,4 @@ export const Login: React.FC = () => {
     </div>
   );
 };
+
