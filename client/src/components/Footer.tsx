@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Phone, ArrowRight, Globe, Facebook, Instagram, Github, MessageCircle } from 'lucide-react';
-import { subscribeToRealtimeTable } from '../services/supabase';
-import { fetchWithAuth } from '../services/api';
+import { supabase, subscribeToRealtimeTable } from '../services/supabase';
 
 interface SiteSettings {
   supportEmail: string;
@@ -39,16 +38,47 @@ export const Footer: React.FC = () => {
     showSocialBar: true,
   });
 
+  const mapDbToSettings = (d: any): SiteSettings => ({
+    supportEmail: d.support_email ?? d.supportEmail ?? 'support@platepixel.com',
+    supportPhone: d.support_phone ?? d.supportPhone ?? '+1 (555) 019-2831',
+    officeLocation: d.office_location ?? d.officeLocation ?? 'San Francisco & Remote Worldwide',
+    twitterUrl: d.twitter_url ?? d.twitterUrl ?? '',
+    twitterVisible: d.twitter_visible ?? d.twitterVisible ?? true,
+    facebookUrl: d.facebook_url ?? d.facebookUrl ?? '',
+    facebookVisible: d.facebook_visible ?? d.facebookVisible ?? true,
+    instagramUrl: d.instagram_url ?? d.instagramUrl ?? '',
+    instagramVisible: d.instagram_visible ?? d.instagramVisible ?? true,
+    githubUrl: d.github_url ?? d.githubUrl ?? '',
+    githubVisible: d.github_visible ?? d.githubVisible ?? true,
+    whatsappUrl: d.whatsapp_url ?? d.whatsappUrl ?? '',
+    whatsappVisible: d.whatsapp_visible ?? d.whatsappVisible ?? true,
+    showSocialBar: d.show_social_bar ?? d.showSocialBar ?? true,
+  });
+
+  const loadSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setSettings(mapDbToSettings(data));
+      }
+    } catch (err) {
+      console.warn('[Footer] Failed to load site_settings from Supabase:', err);
+    }
+  };
+
   useEffect(() => {
-    fetchWithAuth<{ settings?: SiteSettings }>('/catalog/site-settings')
-      .then((res) => {
-        if (res?.settings) setSettings(res.settings);
-      })
-      .catch((err: any) => console.log('Site settings default fallbacks active:', err.message || err));
+    loadSettings();
 
     // Supabase Realtime live sync
     const channel = subscribeToRealtimeTable('site_settings', (payload) => {
-      if (payload.new) setSettings((prev) => ({ ...prev, ...payload.new }));
+      if (payload.new) {
+        setSettings(mapDbToSettings(payload.new));
+      }
     });
 
     return () => {
