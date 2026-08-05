@@ -37,15 +37,28 @@ export const Contact: React.FC = () => {
 
   const loadServices = async () => {
     try {
-      // Primary: Direct Supabase (bypasses Vercel API proxy issues)
+      // Primary: Direct Supabase fetch
       const { data, error } = await supabase
         .from('agency_services')
-        .select('id, title, price, category')
-        .order('created_at', { ascending: true });
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (!error && data && data.length > 0) {
         setDbServices(data);
-        if (!searchParams.get('service')) {
+
+        // Smart matching for URL searchParam or prefilled string
+        const rawParam = searchParams.get('service');
+        if (rawParam) {
+          const matched = data.find((s: any) =>
+            rawParam.toLowerCase().includes(s.title.toLowerCase()) ||
+            s.title.toLowerCase().includes(rawParam.toLowerCase())
+          );
+          if (matched) {
+            setService(matched.title);
+          } else {
+            setService(rawParam);
+          }
+        } else if (!service) {
           setService(data[0].title);
         }
         return;
@@ -55,7 +68,7 @@ export const Contact: React.FC = () => {
       const res = await fetchWithAuth<{ services: any[] }>('/catalog/services');
       if (res.services && res.services.length > 0) {
         setDbServices(res.services);
-        if (!searchParams.get('service')) setService(res.services[0].title);
+        if (!searchParams.get('service') && !service) setService(res.services[0].title);
       }
     } catch (err) {
       console.warn('[Contact] loadServices notice:', err);
@@ -66,12 +79,6 @@ export const Contact: React.FC = () => {
     loadServices();
     const channel = subscribeToRealtimeTable('agency_services', () => loadServices());
     return () => { channel.unsubscribe(); };
-  }, []);
-
-  useEffect(() => {
-    if (searchParams.get('service')) {
-      setService(searchParams.get('service')!);
-    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -281,6 +288,9 @@ export const Contact: React.FC = () => {
                     onChange={(e) => setService(e.target.value)}
                     className="huly-input"
                   >
+                    {service && !dbServices.some(s => s.title === service) && (
+                      <option value={service}>{service}</option>
+                    )}
                     {dbServices.length > 0 ? (
                       dbServices.map((s) => (
                         <option key={s.id || s.title} value={s.title}>
@@ -288,7 +298,7 @@ export const Contact: React.FC = () => {
                         </option>
                       ))
                     ) : (
-                      <option value="">Loading database services...</option>
+                      <option value="Business Website">Business Website (₹14,999)</option>
                     )}
                   </select>
                 </div>
