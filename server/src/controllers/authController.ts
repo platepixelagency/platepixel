@@ -344,9 +344,9 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
 
 export const seedDefaultAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const adminEmail = 'admin@platepixel.com';
+    const adminEmail = 'platepixelagency@gmail.com';
     const adminId = 'a0000000-0000-0000-0000-000000000001';
-    const hashedPassword = await bcrypt.hash('Admin@123', 10);
+    const hashedPassword = await bcrypt.hash('Sonu@0431', 10);
 
     try {
       await supabase.from('portal_clients').upsert({
@@ -355,7 +355,7 @@ export const seedDefaultAdmin = async (req: Request, res: Response): Promise<voi
         email: adminEmail,
         password: hashedPassword,
         company_name: 'PlatePixel Agency HQ',
-        phone: '+1 (555) 019-2831',
+        phone: '+91 8510050467',
         role: 'ADMIN',
       });
     } catch (e) {}
@@ -388,7 +388,7 @@ export const seedDefaultAdmin = async (req: Request, res: Response): Promise<voi
       message: 'Default admin created successfully',
       credentials: {
         email: adminEmail,
-        password: 'Admin@123',
+        password: 'Sonu@0431',
         role: 'ADMIN',
       },
     });

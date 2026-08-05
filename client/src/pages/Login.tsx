@@ -35,9 +35,9 @@ export const Login: React.FC = () => {
       setSeedMessage('');
       setLoading(true);
       await seedAdmin();
-      setEmail('admin@platepixel.com');
-      setPassword('Admin@123');
-      setSeedMessage('Default Admin account created & loaded! Click "Sign In to Workspace" to login.');
+      setEmail('platepixelagency@gmail.com');
+      setPassword('Sonu@0431');
+      setSeedMessage('Admin credentials loaded! Click "Sign In to Workspace" to login.');
     } catch (err: any) {
       setError(err.message || 'Failed to seed admin user');
     } finally {

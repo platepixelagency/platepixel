@@ -66,4 +66,4 @@ Your repository is now pre-configured to deploy **both Frontend and Express Back
 
 1. Visit your Vercel deployment URL (e.g. `https://platepixel-zpyy.vercel.app`).
 2. Test backend API health check at `/api/health` (`https://platepixel-zpyy.vercel.app/api/health`).
-3. Sign in to your workspace at `/login` with credentials (`admin@platepixel.com` / `Admin@123`).
+3. Sign in to your workspace at `/login` with credentials (`platepixelagency@gmail.com` / `Sonu@0431`).
